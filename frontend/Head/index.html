@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Executive Procurement Dashboard - Head</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- Chart.js and Lucide Icons -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <div class="brand-icon">
+          <i data-lucide="shield-check"></i>
+        </div>
+        <div class="brand-text">
+          <h2>EPS Executive</h2>
+          <span>Procurement System</span>
+        </div>
+      </div>
+      <nav class="sidebar-menu">
+        <button class="nav-item active" id="btn-dashboard" onclick="switchTab('dashboard')">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </button>
+        <button class="nav-item" id="btn-requests" onclick="switchTab('requests')">
+          <i data-lucide="clipboard-list"></i>
+          <span>Review Requests</span>
+          <span class="badge badge-error" id="requests-badge-count">4</span>
+        </button>
+        <button class="nav-item" id="btn-suppliers" onclick="switchTab('suppliers')">
+          <i data-lucide="users"></i>
+          <span>Suppliers Directory</span>
+        </button>
+      </nav>
+      <div class="sidebar-user">
+        <div class="user-avatar">SC</div>
+        <div class="user-info">
+          <h4>Sarah Connor</h4>
+          <span>Executive Head</span>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Navbar -->
+      <header class="navbar">
+        <div class="nav-left">
+          <h1 id="page-title">Executive Dashboard</h1>
+          <p id="page-subtitle" class="text-secondary">Real-time procurement metrics and spend analytics.</p>
+        </div>
+        <div class="nav-right">
+          <!-- Theme Toggle -->
+          <button class="icon-btn" onclick="toggleTheme()" title="Toggle Dark/Light Mode">
+            <i data-lucide="sun" id="theme-icon-sun"></i>
+            <i data-lucide="moon" id="theme-icon-moon" style="display: none;"></i>
+          </button>
+          
+          <!-- Notifications Bell -->
+          <button class="icon-btn relative-pos" id="bell-btn" onclick="toggleNotifications()">
+            <i data-lucide="bell"></i>
+            <span class="nav-indicator" id="notif-indicator"></span>
+          </button>
+
+          <!-- Divider -->
+          <div class="nav-divider"></div>
+          
+          <!-- Quick Status -->
+          <div class="system-status">
+            <span class="status-dot green"></span>
+            <span>DB Online</span>
+          </div>
+        </div>
+      </header>
+
+      <!-- NOTIFICATIONS PANEL (SLIDE DOWN/DRAWER) -->
+      <div class="notifications-drawer" id="notifications-drawer">
+        <div class="drawer-header">
+          <h3>Critical Alerts & Notifications</h3>
+          <button class="close-btn" onclick="toggleNotifications()">&times;</button>
+        </div>
+        <div class="drawer-content" id="notifications-list">
+          <!-- Dynamically filled by app.js -->
+        </div>
+        <div class="drawer-footer">
+          <button class="btn btn-secondary btn-sm w-full" onclick="markAllNotificationsRead()">Mark all as read</button>
+        </div>
+      </div>
+
+      <!-- VIEW 1: DASHBOARD & ANALYTICS -->
+      <div class="view-panel" id="panel-dashboard">
+        <!-- KPI METRICS GRID -->
+        <section class="kpi-grid">
+          <!-- Row 1 (Spend Metrics) -->
+          <div class="kpi-card glass">
+            <div class="kpi-icon color-primary"><i data-lucide="wallet"></i></div>
+            <div class="kpi-data">
+              <span class="kpi-label">Total Procurement Spend</span>
+              <h2 class="kpi-value" id="kpi-total-spend">$0.00</h2>
+              <span class="kpi-change trend-up"><i data-lucide="trending-up"></i> +14.2% from FY25</span>
+            </div>
+          </div>
+          
+          <div class="kpi-card glass">
+            <div class="kpi-icon color-info"><i data-lucide="calendar"></i></div>
+            <div class="kpi-data">
+              <span class="kpi-label">Monthly Spend</span>
+              <h2 class="kpi-value" id="kpi-monthly-spend">$0.00</h2>
+              <span class="kpi-change text-secondary">Target: Max $150k</span>
+            </div>
+          </div>
+
+          <div class="kpi-card glass">
+            <div class="kpi-icon color-success"><i data-lucide="pie-chart"></i></div>
+            <div class="kpi-data">
+              <span class="kpi-label">Annual Spend</span>
+              <h2 class="kpi-value" id="kpi-annual-spend">$0.00</h2>
+              <span class="kpi-change text-secondary">Fiscal Year 2026-27</span>
+            </div>
+          </div>
+
+          <div class="kpi-card glass">
+            <div class="kpi-icon color-warning"><i data-lucide="landmark"></i></div>
+            <div class="kpi-data">
+              <span class="kpi-label">Budget Allocated</span>
+              <h2 class="kpi-value" id="kpi-budget-allocated">$0.00</h2>
+              <span class="kpi-change text-secondary">Company Overall</span>
+            </div>
+          </div>
+
+          <!-- Row 2 (Budget Details) -->
+          <div class="kpi-card glass">
+            <div class="kpi-icon color-success"><i data-lucide="badge-dollar-sign"></i></div>
+            <div class="kpi-data">
+              <span class="kpi-label">Actual Paid Spend</span>
+              <h2 class="kpi-value" id="kpi-actual-spend">$0.00</h2>
+              <span class="kpi-change text-secondary">Recognized Paid Invoices</span>
+            </div>
+          </div>
+
+          <div class="kpi-card glass">
+            <div class="kpi-icon color-primary"><i data-lucide="handshake"></i></div>
+            <div class="kpi-data">
+              <span class="kpi-label">Committed Spend</span>
+              <h2 class="kpi-value" id="kpi-committed-spend">$0.00</h2>
+              <span class="kpi-change text-secondary">Approved PO Commitments</span>
+            </div>
+          </div>
+
+          <div class="kpi-card glass">
+            <div class="kpi-icon color-info"><i data-lucide="badge-check"></i></div>
+            <div class="kpi-data">
+              <span class="kpi-label">Available Budget</span>
+              <h2 class="kpi-value" id="kpi-available-budget">$0.00</h2>
+              <span class="kpi-change text-secondary">Uncommitted Reserves</span>
+            </div>
+          </div>
+
+          <div class="kpi-card glass">
+            <div class="kpi-icon color-error"><i data-lucide="gauge"></i></div>
+            <div class="kpi-data">
+              <span class="kpi-label">Budget Utilization %</span>
+              <h2 class="kpi-value" id="kpi-utilization-pct">0%</h2>
+              <div class="progress-bar-container">
+                <div class="progress-bar" id="kpi-utilization-bar" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Row 3 (Operations) -->
+          <div class="kpi-card glass">
+            <div class="kpi-icon color-primary"><i data-lucide="shopping-bag"></i></div>
+            <div class="kpi-data">
+              <span class="kpi-label">Active Purchase Orders</span>
+              <h2 class="kpi-value" id="kpi-active-pos">0</h2>
+              <span class="kpi-change trend-up"><i data-lucide="trending-up"></i> +5 this week</span>
+            </div>
+          </div>
+
+          <div class="kpi-card glass">
+            <div class="kpi-icon color-success"><i data-lucide="users-round"></i></div>
+            <div class="kpi-data">
+              <span class="kpi-label">Total Active Suppliers</span>
+              <h2 class="kpi-value" id="kpi-total-suppliers">0</h2>
+              <span class="kpi-change text-secondary">Vetted Vendors</span>
+            </div>
+          </div>
+
+          <div class="kpi-card glass">
+            <div class="kpi-icon color-info"><i data-lucide="user-plus"></i></div>
+            <div class="kpi-data">
+              <span class="kpi-label">New Suppliers This Month</span>
+              <h2 class="kpi-value" id="kpi-new-suppliers">0</h2>
+              <span class="kpi-change text-secondary">KYC Compliant</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- ANALYTICS SECTION -->
+        <section class="analytics-section">
+          <div class="section-header">
+            <h3>Visual Expenditure Analytics</h3>
+          </div>
+          <div class="charts-grid">
+            <div class="chart-card glass">
+              <h4>Department-wise Spending & Budget</h4>
+              <div class="chart-container">
+                <canvas id="chart-department-spend"></canvas>
+              </div>
+            </div>
+            
+            <div class="chart-card glass">
+              <h4>Category-wise Spend Distribution</h4>
+              <div class="chart-container">
+                <canvas id="chart-category-spend"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card glass">
+              <h4>Monthly Spend Trend (Rolling)</h4>
+              <div class="chart-container">
+                <canvas id="chart-monthly-trend"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card glass">
+              <h4>High-Value Purchase & Invoice Trend</h4>
+              <div class="chart-container">
+                <canvas id="chart-high-value-trend"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card glass">
+              <h4>Top Suppliers By Gross Spend</h4>
+              <div class="chart-container">
+                <canvas id="chart-top-suppliers"></canvas>
+              </div>
+            </div>
+
+            <div class="chart-card glass">
+              <h4>Active Supplier Performance & Vetting Status</h4>
+              <div class="chart-container">
+                <canvas id="chart-supplier-performance"></canvas>
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <!-- VIEW 2: REVIEW REQUESTS -->
+      <div class="view-panel" id="panel-requests" style="display: none;">
+        <!-- Filters Bar -->
+        <div class="filters-bar glass">
+          <div class="filter-group">
+            <label for="filter-category"><i data-lucide="filter"></i> Category:</label>
+            <select id="filter-category" onchange="filterRequests()">
+              <option value="all">All Categories</option>
+              <option value="IT Infrastructure">IT Infrastructure</option>
+              <option value="Software Licenses">Software Licenses</option>
+              <option value="Office Equipment">Office Equipment</option>
+              <option value="Marketing Services">Marketing Services</option>
+              <option value="Maintenance">Maintenance</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label for="filter-status"><i data-lucide="check-square"></i> Status:</label>
+            <select id="filter-status" onchange="filterRequests()">
+              <option value="Pending Head Approval">Pending Head Approval</option>
+              <option value="Approved">Approved By Head</option>
+              <option value="Rejected">Rejected By Head</option>
+              <option value="Hold">On Executive Hold</option>
+              <option value="Returned for Correction">Returned for Correction</option>
+              <option value="all">All Requests</option>
+            </select>
+          </div>
+          <div class="search-box">
+            <i data-lucide="search"></i>
+            <input type="text" id="search-requests" placeholder="Search item, reason, department..." oninput="filterRequests()" />
+          </div>
+        </div>
+
+        <!-- Request Cards List -->
+        <div class="requests-list" id="requests-list-container">
+          <!-- Dynamically filled by app.js -->
+        </div>
+      </div>
+
+      <!-- VIEW 3: SUPPLIERS DIRECTORY -->
+      <div class="view-panel" id="panel-suppliers" style="display: none;">
+        <div class="suppliers-header glass">
+          <h3>Vetted & Registered Suppliers</h3>
+          <div class="status-summary">
+            <span class="badge badge-success">Active: <span id="supp-active-cnt">3</span></span>
+            <span class="badge badge-warning">Suspended: <span id="supp-suspended-cnt">1</span></span>
+            <span class="badge badge-error">Blacklisted: <span id="supp-blacklisted-cnt">1</span></span>
+          </div>
+        </div>
+        
+        <div class="suppliers-grid" id="suppliers-grid-container">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ACTION MODAL -->
+  <div class="modal" id="action-modal">
+    <div class="modal-content glass">
+      <div class="modal-header">
+        <h3 id="modal-title">Executive Action</h3>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="request-summary-box">
+          <p><strong>Item/Service:</strong> <span id="modal-item-name">Server Rack Upgrade</span></p>
+          <p><strong>Estimated Cost:</strong> <span id="modal-item-cost">$0.00</span></p>
+          <p><strong>Department:</strong> <span id="modal-item-dept">IT</span></p>
+        </div>
+        
+        <div class="form-group">
+          <label for="action-comment"><strong>Executive Comments & Reason:</strong></label>
+          <textarea id="action-comment" rows="4" placeholder="Enter comments here to justify your approval, rejection, hold or correction..."></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn id-approve-btn" id="btn-submit-action" onclick="submitExecutiveAction()">Submit Action</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
