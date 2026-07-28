@@ -2,7 +2,10 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import Login from "./pages/Login";
-import RoleDashboard from "./pages/RoleDashboard";
+import {
+  ROLE_SCREEN_REGISTRY,
+  ROLE_SCREEN_ROLES,
+} from "./features/roleScreenRegistry";
 
 function RootRedirect() {
   const { isAuthenticated, getRolePath, role } = useAuth();
@@ -24,16 +27,7 @@ function PublicRoute({ children }) {
   return children;
 }
 
-const roleRoutes = [
-  "employee",
-  "manager",
-  "senior-manager",
-  "head",
-  "procurement-officer",
-  "finance",
-  "admin",
-  "supplier",
-];
+const roleRoutes = ROLE_SCREEN_ROLES;
 
 function App() {
   return (
@@ -49,12 +43,22 @@ function App() {
       />
       <Route element={<ProtectedRoute allowedRoles={roleRoutes} />}>
         {roleRoutes.map((role) => (
-          <Route key={role} path={`/${role}`} element={<RoleDashboard />} />
+          <Route
+            key={role}
+            path={`/${role}`}
+            element={<RoleScreenRoute role={role} />}
+          />
         ))}
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
+}
+
+function RoleScreenRoute({ role }) {
+  const Screen = ROLE_SCREEN_REGISTRY[role];
+
+  return Screen ? <Screen /> : <Navigate to="/login" replace />;
 }
 
 export default App;
