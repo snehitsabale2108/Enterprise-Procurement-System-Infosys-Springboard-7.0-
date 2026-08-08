@@ -16,6 +16,8 @@ export const users = [
   { id: 'U010', name: 'Lakshmi Iyer', email: 'lakshmi@company.com', role: 'finance_officer', department: 'Finance', avatar: '#34d399', phone: '9876543219', status: 'active', createdAt: '2023-04-18' },
   { id: 'U011', name: 'Mohit Verma', email: 'mohit@company.com', role: 'admin', department: 'IT', avatar: '#ef4444', phone: '9876543220', status: 'active', createdAt: '2022-11-01' },
   { id: 'U012', name: 'Neha Kulkarni', email: 'neha@company.com', role: 'employee', department: 'HR', avatar: '#a78bfa', phone: '9876543221', status: 'active', createdAt: '2024-03-05' },
+  { id: 'U013', name: 'Amit', email: 'amit@technohub.in', role: 'supplier', department: 'External', avatar: '#f97316', phone: '9988776655', status: 'active', createdAt: '2023-01-10', supplierId: 'S001' },
+  { id: 'U014', name: 'Neha Deshmukh', email: 'neha@softlicense.com', role: 'supplier', department: 'External', avatar: '#a855f7', phone: '9877665544', status: 'active', createdAt: '2023-03-20', supplierId: 'S002' },
 ];
 
 // ── Departments ──
@@ -70,7 +72,7 @@ export const approvalHistory = [
 
 // ── Suppliers ──
 export const suppliers = [
-  { id: 'S001', companyName: 'TechnoHub India Pvt Ltd', businessType: 'IT Equipment Distributor', gstNumber: '29AABCT1234F1Z5', panNumber: 'AABCT1234F', bankName: 'HDFC Bank', accountNumber: '50200012345678', ifsc: 'HDFC0001234', contactPerson: 'Amit Shah', phone: '9988776655', email: 'sales@technohub.in', address: '123, Electronic City, Bangalore - 560100', status: 'active', rating: 4.5, totalOrders: 28, createdAt: '2023-01-10' },
+  { id: 'S001', companyName: 'TechnoHub India Pvt Ltd', businessType: 'IT Equipment Distributor', gstNumber: '29AABCT1234F1Z5', panNumber: 'AABCT1234F', bankName: 'HDFC Bank', accountNumber: '50200012345678', ifsc: 'HDFC0001234', contactPerson: 'Amit', phone: '9988776655', email: 'sales@technohub.in', address: '123, Electronic City, Bangalore - 560100', status: 'active', rating: 4.5, totalOrders: 28, createdAt: '2023-01-10' },
   { id: 'S002', companyName: 'SoftLicense Solutions', businessType: 'Software Reseller', gstNumber: '27BBCSL5678G2H6', panNumber: 'BBCSL5678G', bankName: 'ICICI Bank', accountNumber: '60300098765432', ifsc: 'ICIC0005678', contactPerson: 'Neha Deshmukh', phone: '9877665544', email: 'info@softlicense.com', address: '456, Baner Road, Pune - 411045', status: 'active', rating: 4.2, totalOrders: 15, createdAt: '2023-03-20' },
   { id: 'S003', companyName: 'FurniCraft Enterprises', businessType: 'Furniture Manufacturer', gstNumber: '36CCFCE9012H3I7', panNumber: 'CCFCE9012H', bankName: 'SBI', accountNumber: '40100056789012', ifsc: 'SBIN0009012', contactPerson: 'Ramesh Babu', phone: '9766554433', email: 'orders@furnicraft.in', address: '789, HITEC City, Hyderabad - 500081', status: 'active', rating: 4.0, totalOrders: 12, createdAt: '2023-05-15' },
   { id: 'S004', companyName: 'CloudFirst Technologies', businessType: 'Cloud Services Provider', gstNumber: '07DDCFT3456I4J8', panNumber: 'DDCFT3456I', bankName: 'Axis Bank', accountNumber: '70400034567890', ifsc: 'UTIB0003456', contactPerson: 'Sanjay Malhotra', phone: '9655443322', email: 'enterprise@cloudfirst.io', address: '321, Connaught Place, New Delhi - 110001', status: 'active', rating: 4.8, totalOrders: 8, createdAt: '2023-08-01' },
@@ -165,6 +167,7 @@ export const roles = [
   { id: 'R008', name: 'facilities_team', displayName: 'Facilities Team', permissions: ['manage_facilities', 'coordinate_vendors', 'verify_delivery', 'handover'] },
   { id: 'R009', name: 'finance_officer', displayName: 'Finance Officer', permissions: ['verify_invoice', 'process_payment', 'view_payments'] },
   { id: 'R010', name: 'admin', displayName: 'Admin', permissions: ['manage_users', 'manage_roles', 'manage_departments', 'manage_categories', 'manage_suppliers', 'manage_rules', 'view_audit'] },
+  { id: 'R011', name: 'supplier', displayName: 'Supplier', permissions: ['view_tenders', 'submit_bid', 'view_own_bids', 'view_own_orders'] },
 ];
 
 // ── Dashboard Chart Data ──
@@ -225,6 +228,177 @@ export const chartData = {
   ],
 };
 
+// ── Tenders ──
+export const tenders = [
+  {
+    id: 'TND-2024-001',
+    requestId: 'REQ-2024-001',
+    title: 'Supply of MacBook Pro 16 inch Laptops',
+    description: 'Procurement of Apple MacBook Pro 16 inch M3 Pro laptops for the Engineering department. Must include 36GB RAM and 512GB SSD configuration.',
+    category: 'Equipment & Assets',
+    specifications: 'Apple MacBook Pro 16", M3 Pro chip, 36GB RAM, 512GB SSD, Space Black. Must include Apple warranty and original accessories.',
+    quantity: 1,
+    estimatedBudget: 189000,
+    deadline: '2024-04-01T23:59:59',
+    status: 'awarded',
+    invitedSuppliers: ['S001', 'S004'],
+    awardedBidId: 'BID-001',
+    awardedSupplierId: 'S001',
+    createdBy: 'U006',
+    createdAt: '2024-03-06T10:00:00',
+    publishedAt: '2024-03-06T11:00:00',
+    closedAt: '2024-03-20T23:59:59',
+  },
+  {
+    id: 'TND-2024-002',
+    requestId: 'REQ-2024-006',
+    title: 'Supply of Ergonomic Office Chairs',
+    description: 'Procurement of 10 ergonomic office chairs for the HR department. Chairs should support adjustable height, lumbar support, and armrests.',
+    category: 'Facilities',
+    specifications: 'Ergonomic office chair with mesh back, adjustable lumbar support, 4D armrests, height adjustable, 120kg weight capacity, 3-year warranty.',
+    quantity: 10,
+    estimatedBudget: 250000,
+    deadline: '2024-04-15T23:59:59',
+    status: 'awarded',
+    invitedSuppliers: ['S003', 'S006'],
+    awardedBidId: 'BID-003',
+    awardedSupplierId: 'S003',
+    createdBy: 'U006',
+    createdAt: '2024-03-10T09:00:00',
+    publishedAt: '2024-03-10T10:00:00',
+    closedAt: '2024-03-28T23:59:59',
+  },
+  {
+    id: 'TND-2024-003',
+    requestId: 'REQ-2024-009',
+    title: 'Conference Room Renovation & AV Installation',
+    description: 'Complete renovation of the main conference room including AV equipment, acoustic panels, smart lighting, and modern furniture.',
+    category: 'Facilities',
+    specifications: 'Full room renovation (approx 500 sq ft), 85" 4K display, ceiling-mounted projector, 12-seat conference table, acoustic panels, Zoom-ready AV system.',
+    quantity: 1,
+    estimatedBudget: 850000,
+    deadline: '2024-04-30T23:59:59',
+    status: 'evaluation',
+    invitedSuppliers: ['S003', 'S005', 'S006'],
+    awardedBidId: null,
+    awardedSupplierId: null,
+    createdBy: 'U006',
+    createdAt: '2024-03-02T14:00:00',
+    publishedAt: '2024-03-03T09:00:00',
+    closedAt: '2024-04-15T23:59:59',
+  },
+  {
+    id: 'TND-2024-004',
+    requestId: 'REQ-2024-007',
+    title: 'GitHub Enterprise Server Annual License',
+    description: 'Annual enterprise license for GitHub Enterprise Server for the entire Engineering department. Need self-hosted option with SSO integration.',
+    category: 'Software & Digital Services',
+    specifications: 'GitHub Enterprise Server license, 50+ seats, self-hosted, SAML SSO support, 24/7 premium support, data residency in India preferred.',
+    quantity: 1,
+    estimatedBudget: 480000,
+    deadline: '2024-04-10T23:59:59',
+    status: 'open',
+    invitedSuppliers: ['S002', 'S004'],
+    awardedBidId: null,
+    awardedSupplierId: null,
+    createdBy: 'U006',
+    createdAt: '2024-03-16T11:00:00',
+    publishedAt: '2024-03-16T12:00:00',
+    closedAt: null,
+  },
+];
+
+// ── Tender Bids ──
+export const tenderBids = [
+  {
+    id: 'BID-001',
+    tenderId: 'TND-2024-001',
+    supplierId: 'S001',
+    supplierName: 'TechnoHub India Pvt Ltd',
+    items: [{ name: 'MacBook Pro 16" M3 Pro 36GB/512GB', unitPrice: 185000, quantity: 1, total: 185000 }],
+    totalAmount: 185000,
+    deliveryDays: 7,
+    validUntil: '2024-05-01',
+    terms: 'Delivery within 7 working days. 1-year Apple warranty included. Free setup and data migration.',
+    status: 'accepted',
+    submittedAt: '2024-03-10T14:00:00',
+    updatedAt: '2024-03-20T10:00:00',
+  },
+  {
+    id: 'BID-002',
+    tenderId: 'TND-2024-001',
+    supplierId: 'S004',
+    supplierName: 'CloudFirst Technologies',
+    items: [{ name: 'MacBook Pro 16" M3 Pro 36GB/512GB', unitPrice: 192000, quantity: 1, total: 192000 }],
+    totalAmount: 192000,
+    deliveryDays: 10,
+    validUntil: '2024-05-01',
+    terms: 'Delivery within 10 working days. Apple warranty + 1 year extended warranty.',
+    status: 'rejected',
+    submittedAt: '2024-03-12T09:00:00',
+    updatedAt: '2024-03-20T10:00:00',
+  },
+  {
+    id: 'BID-003',
+    tenderId: 'TND-2024-002',
+    supplierId: 'S003',
+    supplierName: 'FurniCraft Enterprises',
+    items: [{ name: 'ErgoMax Pro Office Chair', unitPrice: 22000, quantity: 10, total: 220000 }],
+    totalAmount: 220000,
+    deliveryDays: 14,
+    validUntil: '2024-05-15',
+    terms: 'Free delivery and assembly. 3-year warranty on frame, 1-year on upholstery.',
+    status: 'accepted',
+    submittedAt: '2024-03-14T11:00:00',
+    updatedAt: '2024-03-28T15:00:00',
+  },
+  {
+    id: 'BID-004',
+    tenderId: 'TND-2024-002',
+    supplierId: 'S006',
+    supplierName: 'InfraBuilders Co',
+    items: [{ name: 'Premium Ergonomic Chair', unitPrice: 25000, quantity: 10, total: 250000 }],
+    totalAmount: 250000,
+    deliveryDays: 21,
+    validUntil: '2024-05-15',
+    terms: 'Delivery in 3 weeks. 2-year warranty. Installation charges extra (₹500/chair).',
+    status: 'rejected',
+    submittedAt: '2024-03-15T16:00:00',
+    updatedAt: '2024-03-28T15:00:00',
+  },
+  {
+    id: 'BID-005',
+    tenderId: 'TND-2024-003',
+    supplierId: 'S006',
+    supplierName: 'InfraBuilders Co',
+    items: [
+      { name: 'Conference Room Renovation', unitPrice: 720000, quantity: 1, total: 720000 },
+      { name: '85" 4K Display + AV System', unitPrice: 95000, quantity: 1, total: 95000 },
+    ],
+    totalAmount: 815000,
+    deliveryDays: 45,
+    validUntil: '2024-06-30',
+    terms: 'Project completion in 45 days. Includes design consultation. 2-year warranty on all installations.',
+    status: 'under_review',
+    submittedAt: '2024-03-20T10:00:00',
+    updatedAt: '2024-03-20T10:00:00',
+  },
+  {
+    id: 'BID-006',
+    tenderId: 'TND-2024-004',
+    supplierId: 'S002',
+    supplierName: 'SoftLicense Solutions',
+    items: [{ name: 'GitHub Enterprise Server - 50 seats - Annual', unitPrice: 450000, quantity: 1, total: 450000 }],
+    totalAmount: 450000,
+    deliveryDays: 3,
+    validUntil: '2024-05-10',
+    terms: 'License activation within 3 business days. Includes migration support and 24/7 premium support.',
+    status: 'submitted',
+    submittedAt: '2024-03-20T08:00:00',
+    updatedAt: '2024-03-20T08:00:00',
+  },
+];
+
 // ── Helper Functions ──
 export const getStatusBadgeClass = (status) => {
   const map = {
@@ -247,6 +421,16 @@ export const getStatusBadgeClass = (status) => {
     failed: 'badge-danger',
     sent: 'badge-info',
     accepted: 'badge-primary',
+    // Tender statuses
+    open: 'badge-success',
+    evaluation: 'badge-warning',
+    awarded: 'badge-primary',
+    cancelled: 'badge-danger',
+    // Bid statuses
+    submitted: 'badge-info',
+    under_review: 'badge-warning',
+    shortlisted: 'badge-primary',
+    withdrawn: 'badge-neutral',
   };
   return map[status] || 'badge-neutral';
 };
@@ -272,6 +456,16 @@ export const getStatusLabel = (status) => {
     failed: 'Failed',
     sent: 'Sent',
     accepted: 'Accepted',
+    // Tender statuses
+    open: 'Open',
+    evaluation: 'Under Evaluation',
+    awarded: 'Awarded',
+    cancelled: 'Cancelled',
+    // Bid statuses
+    submitted: 'Submitted',
+    under_review: 'Under Review',
+    shortlisted: 'Shortlisted',
+    withdrawn: 'Withdrawn',
   };
   return map[status] || status;
 };
