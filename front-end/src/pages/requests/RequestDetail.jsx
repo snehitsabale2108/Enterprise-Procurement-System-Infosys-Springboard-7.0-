@@ -1,15 +1,96 @@
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { requests, approvalHistory, users, formatCurrency, formatDate, formatDateTime, getStatusBadgeClass, getStatusLabel } from '../../data/mockData';
-import { ArrowLeft, Calendar, Tag, Hash, IndianRupee, Building2, User, CheckCircle, XCircle, RotateCcw } from 'lucide-react';
+import { useAuth } from '../../contexts/AuthContext';
+import {
+  requests, approvalHistory, users, tenders,
+  formatCurrency, formatDate, formatDateTime, getStatusBadgeClass, getStatusLabel
+} from '../../data/mockData';
+import {
+  ArrowLeft, Calendar, Tag, Hash, IndianRupee, Building2, User,
+  CheckCircle, XCircle, RotateCcw, Gavel, Plus, MessageSquare
+} from 'lucide-react';
 
 const RequestDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { currentUser } = useAuth();
+  const [showActionModal, setShowActionModal] = useState(false);
+  const [actionType, setActionType] = useState('');
+  const [comments, setComments] = useState('');
+
   const request = requests.find(r => r.id === id);
   const history = approvalHistory.filter(h => h.requestId === id);
   const creator = users.find(u => u.id === request?.createdBy);
 
   if (!request) return <div className="page"><div className="empty-state"><h3>Request not found</h3></div></div>;
+
+  const role = currentUser?.role;
+
+  // Determine if current user can approve/reject/return this request
+  const statusMap = { manager: 'pending_manager', senior_manager: 'pending_senior_manager', head: 'pending_head' };
+  const canApprove = ['manager', 'senior_manager', 'head'].includes(role) && request.status === statusMap[role];
+
+  // Determine if current user can create a tender
+  const isProcurement = ['procurement_officer', 'admin'].includes(role);
+  const existingTender = tenders.find(t => t.requestId === id);
+  const canCreateTender = isProcurement && request.status === 'approved' && !existingTender;
+
+  // Determine if current user can cancel (only creator + draft/pending)
+  const isCreator = currentUser?.id === request.createdBy;
+  const canCancel = isCreator && ['draft', 'pending_manager'].includes(request.status);
+
+  const openActionModal = (type) => {
+    setActionType(type);
+    setComments('');
+    setShowActionModal(true);
+  };
+
+  const confirmAction = () => {
+    if (actionType === 'approve') {
+      const next = {
+        pending_manager: request.estimatedCost > 50000 ? 'pending_senior_manager' : 'approved',
+        pending_senior_manager: request.estimatedCost > 200000 ? 'pending_head' : 'approved',
+        pending_head: 'approved',
+      };
+      request.status = next[request.status] || 'approved';
+      // Add to approval history
+      approvalHistory.push({
+        id: `AH${String(approvalHistory.length + 1).padStart(3, '0')}`,
+        requestId: id,
+        approverName: currentUser?.name,
+        approverRole: role,
+        action: 'approved',
+        comments: comments || 'Approved from request detail page.',
+        timestamp: new Date().toISOString(),
+      });
+    } else if (actionType === 'reject') {
+      request.status = 'rejected';
+      approvalHistory.push({
+        id: `AH${String(approvalHistory.length + 1).padStart(3, '0')}`,
+        requestId: id,
+        approverName: currentUser?.name,
+        approverRole: role,
+        action: 'rejected',
+        comments: comments || 'Rejected.',
+        timestamp: new Date().toISOString(),
+      });
+    } else if (actionType === 'return') {
+      request.status = 'draft';
+      approvalHistory.push({
+        id: `AH${String(approvalHistory.length + 1).padStart(3, '0')}`,
+        requestId: id,
+        approverName: currentUser?.name,
+        approverRole: role,
+        action: 'returned',
+        comments: comments || 'Returned for correction.',
+        timestamp: new Date().toISOString(),
+      });
+    } else if (actionType === 'cancel') {
+      request.status = 'cancelled';
+    }
+    setShowActionModal(false);
+    alert(`Request ${actionType === 'approve' ? 'approved' : actionType === 'reject' ? 'rejected' : actionType === 'return' ? 'returned' : 'cancelled'} successfully!`);
+  };
 
   const details = [
     { icon: Hash, label: 'Request ID', value: request.id },
@@ -22,6 +103,9 @@ const RequestDetail = () => {
     { icon: Calendar, label: 'Created', value: formatDate(request.createdAt) },
   ];
 
+  // Re-read updated history after potential mutations
+  const currentHistory = approvalHistory.filter(h => h.requestId === id);
+
   return (
     <div className="page" style={{ maxWidth: 900 }}>
       <button className="btn btn-ghost" onClick={() => navigate(-1)}><ArrowLeft size={18} /> Back</button>
@@ -33,6 +117,38 @@ const RequestDetail = () => {
             <span className={`badge ${getStatusBadgeClass(request.status)}`}>{getStatusLabel(request.status)}</span>
             <span className={`badge ${request.priority === 'high' ? 'badge-danger' : request.priority === 'medium' ? 'badge-warning' : 'badge-neutral'}`}>{request.priority} priority</span>
           </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div style={{ display: 'flex', gap: 'var(--space-sm)', flexWrap: 'wrap' }}>
+          {canApprove && (
+            <>
+              <button className="btn btn-success btn-sm" onClick={() => openActionModal('approve')}>
+                <CheckCircle size={14} /> Approve
+              </button>
+              <button className="btn btn-danger btn-sm" onClick={() => openActionModal('reject')}>
+                <XCircle size={14} /> Reject
+              </button>
+              <button className="btn btn-warning btn-sm" onClick={() => openActionModal('return')}>
+                <RotateCcw size={14} /> Return
+              </button>
+            </>
+          )}
+          {canCreateTender && (
+            <button className="btn btn-primary btn-sm" onClick={() => navigate('/tenders/create')}>
+              <Gavel size={14} /> Create Tender
+            </button>
+          )}
+          {existingTender && isProcurement && (
+            <button className="btn btn-secondary btn-sm" onClick={() => navigate(`/tenders/${existingTender.id}`)}>
+              <Gavel size={14} /> View Tender
+            </button>
+          )}
+          {canCancel && (
+            <button className="btn btn-danger btn-sm" onClick={() => openActionModal('cancel')}>
+              <XCircle size={14} /> Cancel Request
+            </button>
+          )}
         </div>
       </div>
 
@@ -62,13 +178,30 @@ const RequestDetail = () => {
         </div>
       </div>
 
+      {/* Linked Tender Info */}
+      {existingTender && (
+        <div className="card" style={{ marginBottom: 'var(--space-xl)', borderLeft: '3px solid var(--primary)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 'var(--space-xs)' }}>
+                <Gavel size={16} /> Linked Tender
+              </div>
+              <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)' }}>
+                {existingTender.id} — {existingTender.title}
+              </p>
+            </div>
+            <span className={`badge ${getStatusBadgeClass(existingTender.status)}`}>{getStatusLabel(existingTender.status)}</span>
+          </div>
+        </div>
+      )}
+
       <div className="card">
         <div className="card-title" style={{ marginBottom: 'var(--space-lg)' }}>Approval History</div>
-        {history.length === 0 ? (
+        {currentHistory.length === 0 ? (
           <p style={{ color: 'var(--text-muted)' }}>No approval actions yet</p>
         ) : (
           <div className="timeline">
-            {history.map((h, i) => (
+            {currentHistory.map((h, i) => (
               <div key={h.id} className="timeline-item">
                 <div className={`timeline-dot ${h.action === 'approved' ? 'completed' : h.action === 'rejected' ? 'rejected' : 'active'}`} />
                 <div className="timeline-content">
@@ -85,6 +218,46 @@ const RequestDetail = () => {
           </div>
         )}
       </div>
+
+      {/* Action Modal */}
+      {showActionModal && (
+        <div className="modal-overlay" onClick={() => setShowActionModal(false)}>
+          <div className="modal" onClick={e => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3 className="modal-title">
+                {actionType === 'approve' ? '✅ Approve' : actionType === 'reject' ? '❌ Reject' : actionType === 'return' ? '↩️ Return' : '🚫 Cancel'} Request
+              </h3>
+            </div>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
+              {actionType === 'approve' && 'Approve this procurement request and forward it to the next level.'}
+              {actionType === 'reject' && 'Reject this procurement request. Please provide a reason.'}
+              {actionType === 'return' && 'Return this request to the requester for corrections.'}
+              {actionType === 'cancel' && 'Cancel this request. This action cannot be undone.'}
+            </p>
+            <div className="form-group">
+              <label className="form-label">
+                Comments {actionType !== 'approve' && actionType !== 'cancel' ? '*' : '(optional)'}
+              </label>
+              <textarea
+                className="form-textarea"
+                placeholder={`Add ${actionType} comments...`}
+                value={comments}
+                onChange={e => setComments(e.target.value)}
+              />
+            </div>
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setShowActionModal(false)}>Cancel</button>
+              <button
+                className={`btn ${actionType === 'approve' ? 'btn-success' : actionType === 'reject' || actionType === 'cancel' ? 'btn-danger' : 'btn-warning'}`}
+                onClick={confirmAction}
+                disabled={['reject', 'return'].includes(actionType) && !comments.trim()}
+              >
+                Confirm {actionType.charAt(0).toUpperCase() + actionType.slice(1)}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
