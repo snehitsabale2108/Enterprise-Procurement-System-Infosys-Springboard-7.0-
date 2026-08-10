@@ -6,6 +6,7 @@ import HeadDashboard from './HeadDashboard';
 import ProcurementDashboard from './ProcurementDashboard';
 import FinanceDashboard from './FinanceDashboard';
 import AdminDashboard from './AdminDashboard';
+import SupplierPortal from '../suppliers/SupplierPortal';
 
 const DashboardRouter = () => {
   const { currentUser } = useAuth();
@@ -20,6 +21,7 @@ const DashboardRouter = () => {
     software_team: ProcurementDashboard,
     facilities_team: ProcurementDashboard,
     finance_officer: FinanceDashboard,
+    supplier: SupplierPortal,
     admin: AdminDashboard,
   };
 

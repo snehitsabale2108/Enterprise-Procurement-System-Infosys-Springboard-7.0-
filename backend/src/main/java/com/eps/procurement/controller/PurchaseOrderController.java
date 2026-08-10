@@ -41,8 +41,32 @@ public class PurchaseOrderController {
         return procurement.updatePurchaseOrderStatus(id, body.get("status"));
     }
 
+    @PostMapping("/purchase-orders/{id}/accept")
+    public PurchaseOrder acceptOrder(@PathVariable String id) {
+        return procurement.acceptPurchaseOrder(id);
+    }
+
+    @PostMapping("/purchase-orders/{id}/reject")
+    public PurchaseOrder rejectOrder(@PathVariable String id, @RequestBody Map<String, String> body) {
+        String reason = body.getOrDefault("reason", body.get("reclineReason"));
+        return procurement.rejectPurchaseOrder(id, reason);
+    }
+
+    @PostMapping("/purchase-orders/{id}/invoice")
+    public PurchaseOrder uploadInvoice(@PathVariable String id, @RequestBody Map<String, Object> body) {
+        String invoiceNumber = String.valueOf(body.getOrDefault("invoiceNumber", "INV-" + id));
+        double invoiceAmount = body.get("invoiceAmount") != null ? Double.parseDouble(body.get("invoiceAmount").toString()) : 0;
+        String fileName = body.get("invoiceFileName") != null ? body.get("invoiceFileName").toString() : null;
+        return procurement.uploadInvoice(id, invoiceNumber, invoiceAmount, fileName);
+    }
+
     @GetMapping("/quotations")
     public List<Quotation> quotations(@RequestParam(required = false) String requestId) {
         return procurement.quotations(requestId);
+    }
+
+    @PostMapping("/quotations")
+    public ResponseEntity<Quotation> submitQuotation(@RequestBody Quotation payload) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(procurement.submitQuotation(payload));
     }
 }

@@ -12,6 +12,7 @@ public class User {
     public String avatar;
     public String phone;
     public String status;
+    public String supplierId;
     public String createdAt;
 
     @JsonIgnore
@@ -29,6 +30,21 @@ public class User {
         this.avatar = avatar;
         this.phone = phone;
         this.status = status;
+        this.createdAt = createdAt;
+        this.password = password;
+    }
+
+    public User(String id, String name, String email, String role, String department,
+                String avatar, String phone, String status, String supplierId, String createdAt, String password) {
+        this.id = id;
+        this.name = name;
+        this.email = email;
+        this.role = role;
+        this.department = department;
+        this.avatar = avatar;
+        this.phone = phone;
+        this.status = status;
+        this.supplierId = supplierId;
         this.createdAt = createdAt;
         this.password = password;
     }

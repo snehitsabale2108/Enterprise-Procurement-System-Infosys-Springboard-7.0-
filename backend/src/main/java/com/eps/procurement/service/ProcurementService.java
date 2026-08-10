@@ -161,4 +161,125 @@ public class ProcurementService {
     public List<SoftwareLicense> licenses() {
         return store.softwareLicenses;
     }
+
+    // ── RFQs ──────────────────────────────────────────────────
+    public Map<String, Object> searchRfqs(String supplierId, String status, String requestId) {
+        List<Rfq> list = store.rfqs.stream()
+                .filter(r -> supplierId == null || supplierId.isBlank() || supplierId.equalsIgnoreCase(r.supplierId))
+                .filter(r -> status == null || status.isBlank() || status.equalsIgnoreCase(r.status))
+                .filter(r -> requestId == null || requestId.isBlank() || requestId.equalsIgnoreCase(r.requestId))
+                .toList();
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("content", list);
+        body.put("totalElements", list.size());
+        return body;
+    }
+
+    public Rfq rfqById(String id) {
+        return store.rfqs.stream().filter(r -> r.id.equalsIgnoreCase(id)).findFirst()
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "RFQ not found"));
+    }
+
+    public Rfq createRfq(Rfq payload) {
+        payload.id = DataStore.nextId("RFQ-2024-", store.rfqs.size(), 3);
+        payload.rfqNumber = payload.id;
+        if (payload.productAvailability == null) payload.productAvailability = "Pending Check";
+        payload.status = "pending";
+        payload.createdAt = LocalDate.now().toString();
+        store.rfqs.add(payload);
+        return payload;
+    }
+
+    public Rfq updateRfqAvailability(String id, String availability) {
+        Rfq rfq = rfqById(id);
+        rfq.productAvailability = availability;
+        return rfq;
+    }
+
+    public Rfq declineRfq(String id, String reason, String remarks) {
+        Rfq rfq = rfqById(id);
+        rfq.status = "declined";
+        rfq.productAvailability = "Out of Stock";
+        rfq.declineReason = reason;
+        rfq.declineRemarks = remarks;
+        return rfq;
+    }
+
+    // ── Supplier Quotation Submission ─────────────────────────
+    public Quotation submitQuotation(Quotation payload) {
+        payload.id = DataStore.nextId("Q", store.quotations.size(), 3);
+        payload.status = "pending";
+        payload.submittedAt = LocalDate.now().toString();
+
+        if (payload.totalAmount <= 0 && payload.unitPrice > 0) {
+            int qty = 1;
+            if (payload.items != null && !payload.items.isEmpty()) {
+                qty = payload.items.get(0).quantity;
+            }
+            payload.totalAmount = payload.unitPrice * qty;
+        }
+
+        store.quotations.add(payload);
+
+        if (payload.rfqId != null) {
+            store.rfqs.stream()
+                    .filter(r -> r.id.equalsIgnoreCase(payload.rfqId))
+                    .findFirst()
+                    .ifPresent(r -> r.status = "quoted");
+        }
+        return payload;
+    }
+
+    // ── Supplier Purchase Order Actions ───────────────────────
+    public PurchaseOrder acceptPurchaseOrder(String id) {
+        PurchaseOrder po = purchaseOrderById(id);
+        po.status = "accepted";
+        return po;
+    }
+
+    public PurchaseOrder rejectPurchaseOrder(String id, String reason) {
+        PurchaseOrder po = purchaseOrderById(id);
+        po.status = "rejected";
+        po.reclineReason = reason;
+        return po;
+    }
+
+    public PurchaseOrder uploadInvoice(String id, String invoiceNumber, double invoiceAmount, String fileName) {
+        PurchaseOrder po = purchaseOrderById(id);
+        po.invoiceNumber = invoiceNumber;
+        po.invoiceAmount = invoiceAmount > 0 ? invoiceAmount : po.totalAmount;
+        po.invoiceFileName = fileName != null ? fileName : "invoice_" + id + ".pdf";
+        po.invoiceUploadedAt = LocalDate.now().toString();
+        return po;
+    }
+
+    // ── Supplier Portal Stats ──────────────────────────────────
+    public Map<String, Object> getSupplierPortalStats(String supplierId) {
+        long pendingRfqs = store.rfqs.stream()
+                .filter(r -> r.supplierId.equalsIgnoreCase(supplierId) && "pending".equalsIgnoreCase(r.status))
+                .count();
+        long submittedQuotations = store.quotations.stream()
+                .filter(q -> q.supplierId.equalsIgnoreCase(supplierId))
+                .count();
+        long posReceived = store.purchaseOrders.stream()
+                .filter(po -> po.supplierId.equalsIgnoreCase(supplierId))
+                .count();
+        long activeOrders = store.purchaseOrders.stream()
+                .filter(po -> po.supplierId.equalsIgnoreCase(supplierId) &&
+                        ("accepted".equalsIgnoreCase(po.status) || "processing".equalsIgnoreCase(po.status) ||
+                         "packed".equalsIgnoreCase(po.status) || "shipped".equalsIgnoreCase(po.status)))
+                .count();
+        long completedOrders = store.purchaseOrders.stream()
+                .filter(po -> po.supplierId.equalsIgnoreCase(supplierId) &&
+                        ("delivered".equalsIgnoreCase(po.status) || "closed".equalsIgnoreCase(po.status)))
+                .count();
+
+        Map<String, Object> stats = new LinkedHashMap<>();
+        stats.put("pendingRfqs", pendingRfqs);
+        stats.put("submittedQuotations", submittedQuotations);
+        stats.put("purchaseOrdersReceived", posReceived);
+        stats.put("activeOrders", activeOrders);
+        stats.put("completedOrders", completedOrders);
+        return stats;
+    }
 }

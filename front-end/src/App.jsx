@@ -16,6 +16,7 @@ import SoftwareWorkflow from './pages/procurement/SoftwareWorkflow';
 import FacilitiesWorkflow from './pages/procurement/FacilitiesWorkflow';
 import SupplierList from './pages/suppliers/SupplierList';
 import SupplierDetail from './pages/suppliers/SupplierDetail';
+import SupplierPortal from './pages/suppliers/SupplierPortal';
 import PurchaseOrderList from './pages/orders/PurchaseOrderList';
 import PurchaseOrderDetail from './pages/orders/PurchaseOrderDetail';
 import GoodsReceiptList from './pages/grn/GoodsReceiptList';
@@ -46,6 +47,9 @@ function App() {
           }>
             <Route index element={<Navigate to="/dashboard" replace />} />
             <Route path="dashboard" element={<DashboardRouter />} />
+            
+            {/* Supplier Portal */}
+            <Route path="supplier-portal" element={<SupplierPortal />} />
             
             {/* Requests */}
             <Route path="requests" element={<RequestList />} />

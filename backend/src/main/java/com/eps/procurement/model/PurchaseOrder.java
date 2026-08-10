@@ -15,6 +15,11 @@ public class PurchaseOrder {
     public double totalAmount;
     public String deliveryDate;
     public String status;
+    public String reclineReason;
+    public String invoiceNumber;
+    public double invoiceAmount;
+    public String invoiceFileName;
+    public String invoiceUploadedAt;
     public String createdAt;
     public String createdBy;
 

@@ -22,6 +22,7 @@ public class DataStore {
     public final List<ProcurementRequest> requests = new CopyOnWriteArrayList<>();
     public final List<ApprovalRecord> approvalHistory = new CopyOnWriteArrayList<>();
     public final List<Supplier> suppliers = new CopyOnWriteArrayList<>();
+    public final List<Rfq> rfqs = new CopyOnWriteArrayList<>();
     public final List<PurchaseOrder> purchaseOrders = new CopyOnWriteArrayList<>();
     public final List<GoodsReceiptNote> goodsReceiptNotes = new CopyOnWriteArrayList<>();
     public final List<SoftwareLicense> softwareLicenses = new CopyOnWriteArrayList<>();
@@ -43,6 +44,7 @@ public class DataStore {
         seedRequests();
         seedApprovalHistory();
         seedSuppliers();
+        seedRfqs();
         seedPurchaseOrders();
         seedGrns();
         seedLicenses();
@@ -67,7 +69,10 @@ public class DataStore {
             new User("U009", "Arun Gupta", "arun@company.com", "facilities_team", "Facilities", "#fbbf24", "9876543218", "active", "2023-10-20", "password123"),
             new User("U010", "Lakshmi Iyer", "lakshmi@company.com", "finance_officer", "Finance", "#34d399", "9876543219", "active", "2023-04-18", "password123"),
             new User("U011", "Mohit Verma", "mohit@company.com", "admin", "IT", "#ef4444", "9876543220", "active", "2022-11-01", "password123"),
-            new User("U012", "Neha Kulkarni", "neha@company.com", "employee", "HR", "#a78bfa", "9876543221", "active", "2024-03-05", "password123")
+            new User("U012", "Neha Kulkarni", "neha@company.com", "employee", "HR", "#a78bfa", "9876543221", "active", "2024-03-05", "password123"),
+            new User("U013", "Amit Shah", "amit@technohub.in", "supplier", "External", "#f97316", "9988776655", "active", "S001", "2023-01-10", "password123"),
+            new User("U014", "Neha Deshmukh", "neha@softlicense.com", "supplier", "External", "#a855f7", "9877665544", "active", "S002", "2023-03-20", "password123"),
+            new User("U015", "Ramesh Babu", "orders@furnicraft.in", "supplier", "External", "#10b981", "9766554433", "active", "S003", "2023-05-15", "password123")
         ));
     }
 
@@ -211,16 +216,23 @@ public class DataStore {
         ));
     }
 
+    private void seedRfqs() {
+        rfqs.addAll(List.of(
+            new Rfq("RFQ-2024-001", "RFQ-2024-001", "REQ-2024-004", "S001", "TechnoHub India Pvt Ltd", "Dell UltraSharp 27\" Monitor", 2, "2024-04-20", "Bangalore Office - Floor 3", "2024-04-05", "Equipment & Assets", "Available", "pending", null, null, "2024-03-20"),
+            new Rfq("RFQ-2024-002", "RFQ-2024-002", "REQ-2024-006", "S003", "FurniCraft Enterprises", "Standing Executive Desk", 3, "2024-05-01", "Bangalore Office - Floor 2", "2024-04-10", "Facilities", "Available", "pending", null, null, "2024-03-22"),
+            new Rfq("RFQ-2024-003", "RFQ-2024-003", "REQ-2024-008", "S001", "TechnoHub India Pvt Ltd", "Wireless Keyboard & Mouse Set", 5, "2024-04-15", "Pune Tech Park", "2024-04-02", "Equipment & Assets", "Available", "quoted", null, null, "2024-03-18"),
+            new Rfq("RFQ-2024-004", "RFQ-2024-004", "REQ-2024-009", "S003", "FurniCraft Enterprises", "Ergonomic Mesh Chair", 10, "2024-05-10", "Hyderabad Tech Campus", "2024-04-15", "Facilities", "Out of Stock", "declined", "Out of Stock", "Item currently on backorder for 60 days", "2024-03-21")
+        ));
+    }
+
     private void seedQuotations() {
         quotations.addAll(List.of(
-            new Quotation("Q001", "REQ-2024-001", "S001", "TechnoHub India Pvt Ltd",
-                new ArrayList<>(List.of(new QuotationItem("MacBook Pro 16\" M3 Pro", 185000, 1))), 185000, "2024-04-30", "accepted", "2024-03-04"),
-            new Quotation("Q002", "REQ-2024-001", "S004", "CloudFirst Technologies",
-                new ArrayList<>(List.of(new QuotationItem("MacBook Pro 16\" M3 Pro", 192000, 1))), 192000, "2024-04-30", "rejected", "2024-03-04"),
-            new Quotation("Q003", "REQ-2024-006", "S003", "FurniCraft Enterprises",
-                new ArrayList<>(List.of(new QuotationItem("Ergonomic Office Chair", 22000, 10))), 220000, "2024-05-15", "accepted", "2024-03-10"),
-            new Quotation("Q004", "REQ-2024-006", "S006", "InfraBuilders Co",
-                new ArrayList<>(List.of(new QuotationItem("Ergonomic Office Chair", 25000, 10))), 250000, "2024-05-15", "rejected", "2024-03-10")
+            new Quotation("Q001", "RFQ-2024-003", "REQ-2024-008", "S001", "TechnoHub India Pvt Ltd", 12500,
+                new ArrayList<>(List.of(new QuotationItem("Wireless Keyboard & Mouse Set", 12500, 5))), 62500, "5 Days", "1 Year Onsite Warranty", "Includes express courier shipping", "2024-04-30", "pending", "2024-03-19"),
+            new Quotation("Q002", "RFQ-2024-001", "REQ-2024-001", "S001", "TechnoHub India Pvt Ltd", 185000,
+                new ArrayList<>(List.of(new QuotationItem("MacBook Pro 16\" M3 Pro", 185000, 1))), 185000, "7 Days", "1 Year AppleCare Warranty", "Official Apple authorized distributor", "2024-04-30", "accepted", "2024-03-04"),
+            new Quotation("Q003", "RFQ-2024-002", "REQ-2024-006", "S003", "FurniCraft Enterprises", 22000,
+                new ArrayList<>(List.of(new QuotationItem("Ergonomic Office Chair", 22000, 10))), 220000, "10 Days", "2 Years Replacement Warranty", "Custom lumbar support cushion included", "2024-05-15", "accepted", "2024-03-10")
         ));
     }
 

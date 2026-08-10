@@ -43,4 +43,19 @@ public class SupplierController {
     public Map<String, String> updateStatus(@PathVariable String id, @RequestBody Map<String, String> body) {
         return procurement.updateSupplierStatus(id, body.get("status"));
     }
+
+    @GetMapping("/portal/dashboard/{supplierId}")
+    public Map<String, Object> portalStats(@PathVariable String supplierId) {
+        return procurement.getSupplierPortalStats(supplierId);
+    }
+
+    @GetMapping("/portal/profile/{supplierId}")
+    public Supplier portalProfile(@PathVariable String supplierId) {
+        return procurement.supplierById(supplierId);
+    }
+
+    @PutMapping("/portal/profile/{supplierId}")
+    public Supplier updatePortalProfile(@PathVariable String supplierId, @RequestBody Supplier payload) {
+        return procurement.updateSupplier(supplierId, payload);
+    }
 }

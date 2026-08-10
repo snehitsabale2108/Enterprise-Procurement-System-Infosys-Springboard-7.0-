@@ -16,8 +16,9 @@ export const users = [
   { id: 'U010', name: 'Lakshmi Iyer', email: 'lakshmi@company.com', role: 'finance_officer', department: 'Finance', avatar: '#34d399', phone: '9876543219', status: 'active', createdAt: '2023-04-18' },
   { id: 'U011', name: 'Mohit Verma', email: 'mohit@company.com', role: 'admin', department: 'IT', avatar: '#ef4444', phone: '9876543220', status: 'active', createdAt: '2022-11-01' },
   { id: 'U012', name: 'Neha Kulkarni', email: 'neha@company.com', role: 'employee', department: 'HR', avatar: '#a78bfa', phone: '9876543221', status: 'active', createdAt: '2024-03-05' },
-  { id: 'U013', name: 'Amit', email: 'amit@technohub.in', role: 'supplier', department: 'External', avatar: '#f97316', phone: '9988776655', status: 'active', createdAt: '2023-01-10', supplierId: 'S001' },
+  { id: 'U013', name: 'Amit Shah', email: 'amit@technohub.in', role: 'supplier', department: 'External', avatar: '#f97316', phone: '9988776655', status: 'active', createdAt: '2023-01-10', supplierId: 'S001' },
   { id: 'U014', name: 'Neha Deshmukh', email: 'neha@softlicense.com', role: 'supplier', department: 'External', avatar: '#a855f7', phone: '9877665544', status: 'active', createdAt: '2023-03-20', supplierId: 'S002' },
+  { id: 'U015', name: 'Ramesh Babu', email: 'orders@furnicraft.in', role: 'supplier', department: 'External', avatar: '#10b981', phone: '9766554433', status: 'active', createdAt: '2023-05-15', supplierId: 'S003' },
 ];
 
 // ── Departments ──
@@ -126,12 +127,20 @@ export const notifications = [
   { id: 'N008', userId: 'U001', type: 'request_rejected', title: 'Request Rejected', message: 'Your request REQ-2024-010 (AWS Cloud Credits) has been rejected.', read: true, createdAt: '2024-03-08T15:30:00', link: '/requests/REQ-2024-010' },
 ];
 
+// ── RFQs ──
+export const rfqs = [
+  { id: 'RFQ-2024-001', rfqNumber: 'RFQ-2024-001', requestId: 'REQ-2024-004', supplierId: 'S001', supplierName: 'TechnoHub India Pvt Ltd', itemName: 'Dell UltraSharp 27" Monitor', quantity: 2, requiredDeliveryDate: '2024-04-20', deliveryLocation: 'Bangalore Office - Floor 3', submissionDeadline: '2024-04-05', category: 'Equipment & Assets', productAvailability: 'Available', status: 'pending', declineReason: null, declineRemarks: null, createdAt: '2024-03-20' },
+  { id: 'RFQ-2024-002', rfqNumber: 'RFQ-2024-002', requestId: 'REQ-2024-006', supplierId: 'S003', supplierName: 'FurniCraft Enterprises', itemName: 'Standing Executive Desk', quantity: 3, requiredDeliveryDate: '2024-05-01', deliveryLocation: 'Bangalore Office - Floor 2', submissionDeadline: '2024-04-10', category: 'Facilities', productAvailability: 'Available', status: 'pending', declineReason: null, declineRemarks: null, createdAt: '2024-03-22' },
+  { id: 'RFQ-2024-003', rfqNumber: 'RFQ-2024-003', requestId: 'REQ-2024-008', supplierId: 'S001', supplierName: 'TechnoHub India Pvt Ltd', itemName: 'Wireless Keyboard & Mouse Set', quantity: 5, requiredDeliveryDate: '2024-04-15', deliveryLocation: 'Pune Tech Park', submissionDeadline: '2024-04-02', category: 'Equipment & Assets', productAvailability: 'Available', status: 'quoted', declineReason: null, declineRemarks: null, createdAt: '2024-03-18' },
+  { id: 'RFQ-2024-004', rfqNumber: 'RFQ-2024-004', requestId: 'REQ-2024-009', supplierId: 'S003', supplierName: 'FurniCraft Enterprises', itemName: 'Ergonomic Mesh Chair', quantity: 10, requiredDeliveryDate: '2024-05-10', deliveryLocation: 'Hyderabad Tech Campus', submissionDeadline: '2024-04-15', category: 'Facilities', productAvailability: 'Out of Stock', status: 'declined', declineReason: 'Out of Stock', declineRemarks: 'Item currently on backorder for 60 days', createdAt: '2024-03-21' },
+];
+
 // ── Quotations ──
 export const quotations = [
-  { id: 'Q001', requestId: 'REQ-2024-001', supplierId: 'S001', supplierName: 'TechnoHub India Pvt Ltd', items: [{ name: 'MacBook Pro 16" M3 Pro', unitPrice: 185000, quantity: 1 }], totalAmount: 185000, validUntil: '2024-04-30', status: 'accepted', submittedAt: '2024-03-04' },
-  { id: 'Q002', requestId: 'REQ-2024-001', supplierId: 'S004', supplierName: 'CloudFirst Technologies', items: [{ name: 'MacBook Pro 16" M3 Pro', unitPrice: 192000, quantity: 1 }], totalAmount: 192000, validUntil: '2024-04-30', status: 'rejected', submittedAt: '2024-03-04' },
-  { id: 'Q003', requestId: 'REQ-2024-006', supplierId: 'S003', supplierName: 'FurniCraft Enterprises', items: [{ name: 'Ergonomic Office Chair', unitPrice: 22000, quantity: 10 }], totalAmount: 220000, validUntil: '2024-05-15', status: 'accepted', submittedAt: '2024-03-10' },
-  { id: 'Q004', requestId: 'REQ-2024-006', supplierId: 'S006', supplierName: 'InfraBuilders Co', items: [{ name: 'Ergonomic Office Chair', unitPrice: 25000, quantity: 10 }], totalAmount: 250000, validUntil: '2024-05-15', status: 'rejected', submittedAt: '2024-03-10' },
+  { id: 'Q001', rfqId: 'RFQ-2024-003', requestId: 'REQ-2024-008', supplierId: 'S001', supplierName: 'TechnoHub India Pvt Ltd', unitPrice: 12500, items: [{ name: 'Wireless Keyboard & Mouse Set', unitPrice: 12500, quantity: 5 }], totalAmount: 62500, estimatedDeliveryTime: '5 Days', warranty: '1 Year Onsite Warranty', remarks: 'Includes express courier shipping', validUntil: '2024-04-30', status: 'pending', submittedAt: '2024-03-19' },
+  { id: 'Q002', rfqId: 'RFQ-2024-001', requestId: 'REQ-2024-001', supplierId: 'S001', supplierName: 'TechnoHub India Pvt Ltd', unitPrice: 185000, items: [{ name: 'MacBook Pro 16" M3 Pro', unitPrice: 185000, quantity: 1 }], totalAmount: 185000, estimatedDeliveryTime: '7 Days', warranty: '1 Year AppleCare Warranty', remarks: 'Official Apple authorized distributor', validUntil: '2024-04-30', status: 'accepted', submittedAt: '2024-03-04' },
+  { id: 'Q003', rfqId: 'RFQ-2024-002', requestId: 'REQ-2024-006', supplierId: 'S003', supplierName: 'FurniCraft Enterprises', unitPrice: 22000, items: [{ name: 'Ergonomic Office Chair', unitPrice: 22000, quantity: 10 }], totalAmount: 220000, estimatedDeliveryTime: '10 Days', warranty: '2 Years Replacement Warranty', remarks: 'Custom lumbar support cushion included', validUntil: '2024-05-15', status: 'accepted', submittedAt: '2024-03-10' },
+  { id: 'Q004', rfqId: 'RFQ-2024-004', requestId: 'REQ-2024-006', supplierId: 'S006', supplierName: 'InfraBuilders Co', unitPrice: 25000, items: [{ name: 'Ergonomic Office Chair', unitPrice: 25000, quantity: 10 }], totalAmount: 250000, estimatedDeliveryTime: '15 Days', warranty: '1 Year Warranty', remarks: 'Standard delivery', validUntil: '2024-05-15', status: 'rejected', submittedAt: '2024-03-10' },
 ];
 
 // ── Audit Logs ──

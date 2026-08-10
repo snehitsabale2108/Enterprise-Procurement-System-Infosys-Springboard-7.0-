@@ -15,6 +15,8 @@ public class Supplier {
     public String email;
     public String address;
     public String status;
+    public String kycStatus = "APPROVED"; // "APPROVED", "PENDING_REVIEW"
+    public String kycRemarks = "KYC documents verified and approved by admin";
     public double rating;
     public int totalOrders;
     public String createdAt;

@@ -18,7 +18,13 @@ const Sidebar = () => {
     const items = [];
 
     // Dashboard — everyone
-    items.push({ to: '/dashboard', icon: LayoutDashboard, label: 'Dashboard' });
+    items.push({ to: '/dashboard', icon: LayoutDashboard, label: role === 'supplier' ? 'Supplier Portal' : 'Dashboard' });
+
+    // Supplier portal specific navigation
+    if (role === 'supplier') {
+      items.push({ to: '/supplier-portal', icon: Building2, label: 'Portal Workspace' });
+      return items;
+    }
 
     // Employee: Requests
     if (['employee', 'manager', 'senior_manager', 'head', 'admin'].includes(role)) {
