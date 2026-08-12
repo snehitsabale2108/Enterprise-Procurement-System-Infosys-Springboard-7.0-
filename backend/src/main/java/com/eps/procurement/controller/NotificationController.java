@@ -2,7 +2,9 @@ package com.eps.procurement.controller;
 
 import com.eps.procurement.service.NotificationService;
 import java.util.Map;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 /** Notification endpoints: /api/notifications/** */
 @RestController
@@ -18,6 +20,11 @@ public class NotificationController {
     @GetMapping
     public Map<String, Object> list(@RequestParam(required = false) String userId) {
         return notifications.forUser(userId);
+    }
+
+    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public SseEmitter stream(@RequestParam(required = false) String userId) {
+        return notifications.subscribe(userId);
     }
 
     @PatchMapping("/{id}/read")
