@@ -22,7 +22,8 @@ public class NotificationController {
         return notifications.forUser(userId);
     }
 
-    @GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    /** Live notification stream (Server-Sent Events) for one user. */
+    @GetMapping(path = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter stream(@RequestParam(required = false) String userId) {
         return notifications.subscribe(userId);
     }

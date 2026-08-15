@@ -13,9 +13,11 @@ import org.springframework.web.server.ResponseStatusException;
 public class FinanceService {
 
     private final DataStore store;
+    private final NotificationService notifications;
 
-    public FinanceService(DataStore store) {
+    public FinanceService(DataStore store, NotificationService notifications) {
         this.store = store;
+        this.notifications = notifications;
     }
 
     public Map<String, Object> searchPayments(String status) {
@@ -47,6 +49,9 @@ public class FinanceService {
                     "All verification checks must pass before the invoice can be approved");
         }
         payment.status = "approved";
+        notifications.pushToRoles(java.util.List.of("finance_officer"), "invoice_verified", "Invoice Verified",
+                "Invoice for " + payment.poNumber + " passed the three-way match and is ready for payment.",
+                "/finance/payments");
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("message", "Invoice verified");
         response.put("status", "approved");
@@ -70,12 +75,24 @@ public class FinanceService {
             payment.verifiedBy = String.valueOf(body.get("verifiedBy"));
         }
 
+        notifySupplierOfPayment(payment);
+
         Map<String, Object> response = new LinkedHashMap<>();
         response.put("message", "Payment processed successfully");
         response.put("status", "paid");
         response.put("transactionId", payment.transactionId);
         response.put("payment", payment);
         return response;
+    }
+
+    private void notifySupplierOfPayment(Payment payment) {
+        store.suppliers.stream()
+                .filter(s -> s.companyName != null && s.companyName.equals(payment.supplierName))
+                .findFirst()
+                .ifPresent(s -> notifications.pushToSupplier(s.id, "payment_completed", "Payment Released",
+                        "Payment of Rs " + Math.round(payment.amount) + " for " + payment.poNumber
+                                + " has been released (" + payment.referenceNumber + ").",
+                        "/supplier-portal"));
     }
 
     private boolean flag(Object value) {
