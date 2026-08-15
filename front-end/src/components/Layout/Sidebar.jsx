@@ -73,6 +73,8 @@ const Sidebar = () => {
 
     // Finance
     if (['finance_officer', 'head', 'admin'].includes(role)) {
+      items.push({ to: '/finance/quotations', icon: ClipboardList, label: 'Quotation Approvals' });
+      items.push({ to: '/finance/purchase-orders', icon: CheckSquare, label: 'PO Approvals' });
       items.push({ to: '/finance', icon: CreditCard, label: 'Finance' });
     }
 

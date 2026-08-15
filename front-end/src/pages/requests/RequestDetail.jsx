@@ -2,12 +2,17 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-  requests, approvalHistory, users, tenders,
+  users, tenders,
   formatCurrency, formatDate, formatDateTime, getStatusBadgeClass, getStatusLabel
 } from '../../data/mockData';
 import {
-  ArrowLeft, Calendar, Tag, Hash, IndianRupee, Building2, User,
-  CheckCircle, XCircle, RotateCcw, Gavel, Plus, MessageSquare
+  useEpsStore, getRequest, getApprovalHistory, approveRequest, rejectRequest,
+  returnRequest, cancelRequest, canUserActOn, isRequestEditable,
+  getRequestQuotations, STAGE_LABELS,
+} from '../../store/epsStore';
+import {
+  ArrowLeft, Calendar, Tag, Hash, IndianRupee, Building2, User, Pencil,
+  CheckCircle, XCircle, RotateCcw, Gavel, AlertTriangle, ShoppingCart
 } from 'lucide-react';
 
 const RequestDetail = () => {
@@ -17,18 +22,20 @@ const RequestDetail = () => {
   const [showActionModal, setShowActionModal] = useState(false);
   const [actionType, setActionType] = useState('');
   const [comments, setComments] = useState('');
+  const [error, setError] = useState('');
+  useEpsStore(); // re-render on any workflow change
 
-  const request = requests.find(r => r.id === id);
-  const history = approvalHistory.filter(h => h.requestId === id);
+  const request = getRequest(id);
   const creator = users.find(u => u.id === request?.createdBy);
 
   if (!request) return <div className="page"><div className="empty-state"><h3>Request not found</h3></div></div>;
 
   const role = currentUser?.role;
 
-  // Determine if current user can approve/reject/return this request
-  const statusMap = { manager: 'pending_manager', senior_manager: 'pending_senior_manager', head: 'pending_head' };
-  const canApprove = ['manager', 'senior_manager', 'head'].includes(role) && request.status === statusMap[role];
+  // Only the role the request is currently waiting on may act on it
+  const canApprove = canUserActOn(request, currentUser);
+  const canEdit = isRequestEditable(request, currentUser);
+  const requestQuotations = getRequestQuotations(request.id);
 
   // Determine if current user can create a tender
   const isProcurement = ['procurement_officer', 'admin'].includes(role);
@@ -37,7 +44,8 @@ const RequestDetail = () => {
 
   // Determine if current user can cancel (only creator + draft/pending)
   const isCreator = currentUser?.id === request.createdBy;
-  const canCancel = isCreator && ['draft', 'pending_manager'].includes(request.status);
+  const canCancel = isCreator && ['draft', 'returned', 'pending_manager'].includes(request.status);
+  const canSelectVendor = isProcurement && requestQuotations.some(q => q.financeStatus === 'approved') && !request.selectedQuotationId;
 
   const openActionModal = (type) => {
     setActionType(type);
@@ -46,50 +54,16 @@ const RequestDetail = () => {
   };
 
   const confirmAction = () => {
-    if (actionType === 'approve') {
-      const next = {
-        pending_manager: request.estimatedCost > 50000 ? 'pending_senior_manager' : 'approved',
-        pending_senior_manager: request.estimatedCost > 200000 ? 'pending_head' : 'approved',
-        pending_head: 'approved',
-      };
-      request.status = next[request.status] || 'approved';
-      // Add to approval history
-      approvalHistory.push({
-        id: `AH${String(approvalHistory.length + 1).padStart(3, '0')}`,
-        requestId: id,
-        approverName: currentUser?.name,
-        approverRole: role,
-        action: 'approved',
-        comments: comments || 'Approved from request detail page.',
-        timestamp: new Date().toISOString(),
-      });
-    } else if (actionType === 'reject') {
-      request.status = 'rejected';
-      approvalHistory.push({
-        id: `AH${String(approvalHistory.length + 1).padStart(3, '0')}`,
-        requestId: id,
-        approverName: currentUser?.name,
-        approverRole: role,
-        action: 'rejected',
-        comments: comments || 'Rejected.',
-        timestamp: new Date().toISOString(),
-      });
-    } else if (actionType === 'return') {
-      request.status = 'draft';
-      approvalHistory.push({
-        id: `AH${String(approvalHistory.length + 1).padStart(3, '0')}`,
-        requestId: id,
-        approverName: currentUser?.name,
-        approverRole: role,
-        action: 'returned',
-        comments: comments || 'Returned for correction.',
-        timestamp: new Date().toISOString(),
-      });
-    } else if (actionType === 'cancel') {
-      request.status = 'cancelled';
+    try {
+      if (actionType === 'approve') approveRequest(id, currentUser, comments || 'Approved.');
+      else if (actionType === 'reject') rejectRequest(id, currentUser, comments);
+      else if (actionType === 'return') returnRequest(id, currentUser, comments);
+      else if (actionType === 'cancel') cancelRequest(id, currentUser);
+      setError('');
+      setShowActionModal(false);
+    } catch (err) {
+      setError(err.message);
     }
-    setShowActionModal(false);
-    alert(`Request ${actionType === 'approve' ? 'approved' : actionType === 'reject' ? 'rejected' : actionType === 'return' ? 'returned' : 'cancelled'} successfully!`);
   };
 
   const details = [
@@ -103,8 +77,7 @@ const RequestDetail = () => {
     { icon: Calendar, label: 'Created', value: formatDate(request.createdAt) },
   ];
 
-  // Re-read updated history after potential mutations
-  const currentHistory = approvalHistory.filter(h => h.requestId === id);
+  const currentHistory = getApprovalHistory(id);
 
   return (
     <div className="page" style={{ maxWidth: 900 }}>
@@ -134,6 +107,16 @@ const RequestDetail = () => {
               </button>
             </>
           )}
+          {canEdit && (
+            <button className="btn btn-primary btn-sm" onClick={() => navigate(`/requests/${request.id}/edit`)}>
+              <Pencil size={14} /> {request.status === 'returned' ? 'Edit & Resubmit' : 'Edit Draft'}
+            </button>
+          )}
+          {canSelectVendor && (
+            <button className="btn btn-primary btn-sm" onClick={() => navigate(`/procurement/vendor-selection/${request.id}`)}>
+              <ShoppingCart size={14} /> Select Vendor
+            </button>
+          )}
           {canCreateTender && (
             <button className="btn btn-primary btn-sm" onClick={() => navigate('/tenders/create')}>
               <Gavel size={14} /> Create Tender
@@ -151,6 +134,40 @@ const RequestDetail = () => {
           )}
         </div>
       </div>
+
+      {request.status === 'returned' && request.returnComments && (
+        <div className="card" style={{ borderLeft: '3px solid var(--warning)', marginBottom: 'var(--space-lg)' }}>
+          <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <AlertTriangle size={16} color="var(--warning)" /> Returned for correction by {request.returnedBy} ({request.returnedByRole?.replace(/_/g, ' ')})
+          </div>
+          <p style={{ color: 'var(--text-secondary)', marginTop: 6 }}>{request.returnComments}</p>
+          <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>{formatDateTime(request.returnedAt)}</span>
+          {isCreator && (
+            <div style={{ marginTop: 'var(--space-md)' }}>
+              <button className="btn btn-primary btn-sm" onClick={() => navigate(`/requests/${request.id}/edit`)}>
+                <Pencil size={14} /> Edit & Resubmit
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {(requestQuotations.length > 0 || request.selectedSupplierName) && (
+        <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
+          <div className="card-title" style={{ marginBottom: 'var(--space-sm)' }}>Sourcing Status</div>
+          <div style={{ display: 'flex', gap: 'var(--space-lg)', flexWrap: 'wrap', alignItems: 'center' }}>
+            <span className="badge badge-info">{STAGE_LABELS[request.procurementStage] || 'In Sourcing'}</span>
+            <span style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)' }}>
+              {requestQuotations.length} quotation(s) • {requestQuotations.filter(q => q.financeStatus === 'approved').length} finance-approved
+            </span>
+            {request.selectedSupplierName && (
+              <span style={{ fontSize: 'var(--font-sm)' }}>
+                Awarded to <strong>{request.selectedSupplierName}</strong>{request.poId ? ` • ${request.poId}` : ''}
+              </span>
+            )}
+          </div>
+        </div>
+      )}
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-lg)', marginBottom: 'var(--space-xl)' }}>
         <div className="card">
@@ -245,6 +262,7 @@ const RequestDetail = () => {
                 onChange={e => setComments(e.target.value)}
               />
             </div>
+            {error && <p style={{ color: 'var(--danger)', fontSize: 'var(--font-sm)' }}>{error}</p>}
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setShowActionModal(false)}>Cancel</button>
               <button

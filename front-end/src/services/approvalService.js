@@ -1,5 +1,16 @@
 import { apiCall, isMockMode } from './apiConfig';
-import { approvalHistory as mockHistory, requests as mockRequests } from '../data/mockData';
+import { approvalHistory as mockHistory, requests as mockRequests, users as mockUsers } from '../data/mockData';
+import {
+  approveRequest as storeApprove,
+  rejectRequest as storeReject,
+  returnRequest as storeReturn,
+} from '../store/epsStore';
+
+/** Resolves the acting approver: an explicit user, or the first active holder of the role. */
+const resolveActor = (actor, role) =>
+  (typeof actor === 'object' && actor)
+    || mockUsers.find(u => u.role === role && u.status === 'active')
+    || { name: 'Approver', role };
 
 // ============================================
 // Approval Service
@@ -70,26 +81,16 @@ export const getPendingApprovals = async (role) => {
  *   }
  * }
  */
-export const approveRequest = async (requestId, comments, approverRole) => {
-  // ── Real API call ──
-  // return apiCall(`/approvals/${requestId}/approve`, {
-  //   method: 'POST',
-  //   body: JSON.stringify({ comments, approverRole }),
-  // });
-
-  // ── Mock ──
-  if (isMockMode()) {
-    const request = mockRequests.find(r => r.id === requestId);
-    if (!request) throw new Error('Request not found');
-    
-    const nextStatus = {
-      pending_manager: request.estimatedCost > 50000 ? 'pending_senior_manager' : 'approved',
-      pending_senior_manager: request.estimatedCost > 200000 ? 'pending_head' : 'approved',
-      pending_head: 'approved',
-    };
-    request.status = nextStatus[request.status] || 'approved';
-    return { message: 'Request approved', newStatus: request.status };
+export const approveRequest = async (requestId, comments, approverRole, actor) => {
+  if (!isMockMode()) {
+    return apiCall(`/approvals/${requestId}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ comments, approverRole }),
+    });
   }
+
+  const request = storeApprove(requestId, resolveActor(actor, approverRole), comments);
+  return { message: 'Request approved', newStatus: request.status };
 };
 
 /**
@@ -107,19 +108,16 @@ export const approveRequest = async (requestId, comments, approverRole) => {
  *   "newStatus": "rejected"
  * }
  */
-export const rejectRequest = async (requestId, comments, approverRole) => {
-  // ── Real API call ──
-  // return apiCall(`/approvals/${requestId}/reject`, {
-  //   method: 'POST',
-  //   body: JSON.stringify({ comments, approverRole }),
-  // });
-
-  // ── Mock ──
-  if (isMockMode()) {
-    const request = mockRequests.find(r => r.id === requestId);
-    if (request) request.status = 'rejected';
-    return { message: 'Request rejected', newStatus: 'rejected' };
+export const rejectRequest = async (requestId, comments, approverRole, actor) => {
+  if (!isMockMode()) {
+    return apiCall(`/approvals/${requestId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ comments, approverRole }),
+    });
   }
+
+  storeReject(requestId, resolveActor(actor, approverRole), comments);
+  return { message: 'Request rejected', newStatus: 'rejected' };
 };
 
 /**
@@ -134,20 +132,18 @@ export const rejectRequest = async (requestId, comments, approverRole) => {
  * Response (200):
  * {
  *   "message": "Request returned for correction",
- *   "newStatus": "draft"
+ *   "newStatus": "returned"   // editable again by the requester
  * }
  */
-export const returnRequest = async (requestId, comments, approverRole) => {
-  // ── Real API call ──
-  // return apiCall(`/approvals/${requestId}/return`, {
-  //   method: 'POST',
-  //   body: JSON.stringify({ comments, approverRole }),
-  // });
-
-  // ── Mock ──
-  if (isMockMode()) {
-    const request = mockRequests.find(r => r.id === requestId);
-    if (request) request.status = 'draft';
-    return { message: 'Request returned for correction', newStatus: 'draft' };
+export const returnRequest = async (requestId, comments, approverRole, actor) => {
+  if (!isMockMode()) {
+    return apiCall(`/approvals/${requestId}/return`, {
+      method: 'POST',
+      body: JSON.stringify({ comments, approverRole }),
+    });
   }
+
+  // Returned requests become editable drafts again for the requester.
+  storeReturn(requestId, resolveActor(actor, approverRole), comments);
+  return { message: 'Request returned for correction', newStatus: 'returned' };
 };

@@ -49,11 +49,13 @@ export const requests = [
   { id: 'REQ-2024-005', title: 'Jira Software Cloud Premium', description: 'Project management tool upgrade', reason: 'Better project tracking needed', category: 'Software & Digital Services', subcategory: 'SaaS Subscription', quantity: 1, estimatedCost: 320000, department: 'IT', requiredDate: '2024-04-01', status: 'pending_head', createdBy: 'U001', createdAt: '2024-03-02', updatedAt: '2024-03-12', priority: 'high' },
   { id: 'REQ-2024-006', title: 'Office Chairs - Ergonomic', description: 'Replace old office chairs with ergonomic models', reason: 'Employee comfort and health', category: 'Facilities', subcategory: 'Furniture', quantity: 10, estimatedCost: 250000, department: 'HR', requiredDate: '2024-05-01', status: 'approved', createdBy: 'U012', createdAt: '2024-02-20', updatedAt: '2024-03-10', priority: 'medium' },
   { id: 'REQ-2024-007', title: 'GitHub Enterprise License', description: 'Enterprise license for the development team', reason: 'Security and compliance requirements', category: 'Software & Digital Services', subcategory: 'Software License', quantity: 1, estimatedCost: 480000, department: 'Engineering', requiredDate: '2024-04-15', status: 'in_procurement', createdBy: 'U001', createdAt: '2024-02-15', updatedAt: '2024-03-15', priority: 'high' },
-  { id: 'REQ-2024-008', title: 'Wireless Keyboard & Mouse Set', description: 'Logitech MX Keys and MX Master 3S', reason: 'Old peripherals malfunctioning', category: 'Equipment & Assets', subcategory: 'Keyboard', quantity: 5, estimatedCost: 62500, department: 'Marketing', requiredDate: '2024-04-05', status: 'draft', createdBy: 'U002', createdAt: '2024-03-14', updatedAt: '2024-03-14', priority: 'low' },
+  { id: 'REQ-2024-011', title: 'Standing Desk Converters', description: '12 adjustable standing desk converters for the design pod', reason: 'Ergonomics audit recommendation', category: 'Facilities', subcategory: 'Furniture', quantity: 12, estimatedCost: 180000, department: 'Design', requiredDate: '2024-06-10', status: 'approved', createdBy: 'U001', createdAt: '2024-03-18', updatedAt: '2024-03-22', priority: 'medium', procurementStage: 'finance_review', selectedQuotationId: null, selectedSupplierId: null, selectedSupplierName: null, poId: null },
+  { id: 'REQ-2024-012', title: 'Conference Room AV Upgrade', description: '4K conference camera, ceiling mics and soundbar for Meeting Room 2', reason: 'Hybrid meeting quality issues', category: 'Equipment & Assets', subcategory: 'Office Equipment', quantity: 1, estimatedCost: 240000, department: 'IT', requiredDate: '2024-06-01', status: 'returned', createdBy: 'U001', createdAt: '2024-03-19', updatedAt: '2024-03-21', priority: 'high', returnComments: 'Please attach two comparative quotes and split the AV items line by line.', returnedBy: 'Anand Mehta', returnedByRole: 'manager', returnedAt: '2024-03-21T10:30:00', returnedFromStatus: 'pending_manager' },
+  { id: 'REQ-2024-008', title: 'Wireless Keyboard & Mouse Set', description: 'Logitech MX Keys and MX Master 3S', reason: 'Old peripherals malfunctioning', category: 'Equipment & Assets', subcategory: 'Keyboard', quantity: 5, estimatedCost: 62500, department: 'Marketing', requiredDate: '2024-04-05', status: 'approved', createdBy: 'U002', createdAt: '2024-03-14', updatedAt: '2024-03-14', priority: 'low' },
   { id: 'REQ-2024-009', title: 'Conference Room Renovation', description: 'Renovation of main conference room including AV equipment', reason: 'Outdated facilities', category: 'Facilities', subcategory: 'Renovation', quantity: 1, estimatedCost: 850000, department: 'Facilities', requiredDate: '2024-06-01', status: 'approved', createdBy: 'U009', createdAt: '2024-01-20', updatedAt: '2024-03-01', priority: 'high' },
   { id: 'REQ-2024-010', title: 'AWS Cloud Credits', description: 'Cloud infrastructure credits for Q2', reason: 'Scaling production infrastructure', category: 'Software & Digital Services', subcategory: 'Cloud Service', quantity: 1, estimatedCost: 500000, department: 'Engineering', requiredDate: '2024-04-01', status: 'rejected', createdBy: 'U001', createdAt: '2024-02-28', updatedAt: '2024-03-08', priority: 'high' },
-  { id: 'REQ-2024-011', title: 'Logitech Webcam C930e', description: 'HD webcam for video conferencing', reason: 'Remote meetings quality', category: 'Equipment & Assets', subcategory: 'Webcam', quantity: 8, estimatedCost: 56000, department: 'Engineering', requiredDate: '2024-04-10', status: 'delivered', createdBy: 'U001', createdAt: '2024-01-15', updatedAt: '2024-03-10', priority: 'medium' },
-  { id: 'REQ-2024-012', title: 'Slack Enterprise Grid', description: 'Upgrade communication platform', reason: 'Enterprise security features needed', category: 'Software & Digital Services', subcategory: 'SaaS Subscription', quantity: 1, estimatedCost: 420000, department: 'IT', requiredDate: '2024-05-01', status: 'closed', createdBy: 'U001', createdAt: '2024-01-05', updatedAt: '2024-03-15', priority: 'high' },
+  { id: 'REQ-2024-013', title: 'Logitech Webcam C930e', description: 'HD webcam for video conferencing', reason: 'Remote meetings quality', category: 'Equipment & Assets', subcategory: 'Webcam', quantity: 8, estimatedCost: 56000, department: 'Engineering', requiredDate: '2024-04-10', status: 'delivered', createdBy: 'U001', createdAt: '2024-01-15', updatedAt: '2024-03-10', priority: 'medium' },
+  { id: 'REQ-2024-014', title: 'Slack Enterprise Grid', description: 'Upgrade communication platform', reason: 'Enterprise security features needed', category: 'Software & Digital Services', subcategory: 'SaaS Subscription', quantity: 1, estimatedCost: 420000, department: 'IT', requiredDate: '2024-05-01', status: 'closed', createdBy: 'U001', createdAt: '2024-01-05', updatedAt: '2024-03-15', priority: 'high' },
 ];
 
 // ── Approval History ──
@@ -87,8 +89,8 @@ export const purchaseOrders = [
   { id: 'PO-2024-002', requestId: 'REQ-2024-006', supplierId: 'S003', supplierName: 'FurniCraft Enterprises', items: [{ name: 'Ergonomic Office Chair - Herman Miller Clone', quantity: 10, unitPrice: 22000, total: 220000 }], subtotal: 220000, tax: 39600, totalAmount: 259600, deliveryDate: '2024-04-25', status: 'accepted', createdAt: '2024-03-12', createdBy: 'U006' },
   { id: 'PO-2024-003', requestId: 'REQ-2024-007', supplierId: 'S002', supplierName: 'SoftLicense Solutions', items: [{ name: 'GitHub Enterprise Server - Annual License', quantity: 1, unitPrice: 450000, total: 450000 }], subtotal: 450000, tax: 81000, totalAmount: 531000, deliveryDate: '2024-04-01', status: 'sent', createdAt: '2024-03-16', createdBy: 'U006' },
   { id: 'PO-2024-004', requestId: 'REQ-2024-009', supplierId: 'S006', supplierName: 'InfraBuilders Co', items: [{ name: 'Conference Room Full Renovation', quantity: 1, unitPrice: 750000, total: 750000 }, { name: 'AV Equipment Installation', quantity: 1, unitPrice: 85000, total: 85000 }], subtotal: 835000, tax: 150300, totalAmount: 985300, deliveryDate: '2024-05-15', status: 'accepted', createdAt: '2024-03-05', createdBy: 'U006' },
-  { id: 'PO-2024-005', requestId: 'REQ-2024-011', supplierId: 'S001', supplierName: 'TechnoHub India Pvt Ltd', items: [{ name: 'Logitech C930e Webcam', quantity: 8, unitPrice: 6500, total: 52000 }], subtotal: 52000, tax: 9360, totalAmount: 61360, deliveryDate: '2024-03-05', status: 'closed', createdAt: '2024-02-01', createdBy: 'U006' },
-  { id: 'PO-2024-006', requestId: 'REQ-2024-012', supplierId: 'S002', supplierName: 'SoftLicense Solutions', items: [{ name: 'Slack Enterprise Grid - Annual', quantity: 1, unitPrice: 400000, total: 400000 }], subtotal: 400000, tax: 72000, totalAmount: 472000, deliveryDate: '2024-02-15', status: 'closed', createdAt: '2024-01-10', createdBy: 'U006' },
+  { id: 'PO-2024-005', requestId: 'REQ-2024-013', supplierId: 'S001', supplierName: 'TechnoHub India Pvt Ltd', items: [{ name: 'Logitech C930e Webcam', quantity: 8, unitPrice: 6500, total: 52000 }], subtotal: 52000, tax: 9360, totalAmount: 61360, deliveryDate: '2024-03-05', status: 'closed', createdAt: '2024-02-01', createdBy: 'U006' },
+  { id: 'PO-2024-006', requestId: 'REQ-2024-014', supplierId: 'S002', supplierName: 'SoftLicense Solutions', items: [{ name: 'Slack Enterprise Grid - Annual', quantity: 1, unitPrice: 400000, total: 400000 }], subtotal: 400000, tax: 72000, totalAmount: 472000, deliveryDate: '2024-02-15', status: 'closed', createdAt: '2024-01-10', createdBy: 'U006' },
 ];
 
 // ── Goods Receipt Notes ──
@@ -131,16 +133,20 @@ export const notifications = [
 export const rfqs = [
   { id: 'RFQ-2024-001', rfqNumber: 'RFQ-2024-001', requestId: 'REQ-2024-004', supplierId: 'S001', supplierName: 'TechnoHub India Pvt Ltd', itemName: 'Dell UltraSharp 27" Monitor', quantity: 2, requiredDeliveryDate: '2024-04-20', deliveryLocation: 'Bangalore Office - Floor 3', submissionDeadline: '2024-04-05', category: 'Equipment & Assets', productAvailability: 'Available', status: 'pending', declineReason: null, declineRemarks: null, createdAt: '2024-03-20' },
   { id: 'RFQ-2024-002', rfqNumber: 'RFQ-2024-002', requestId: 'REQ-2024-006', supplierId: 'S003', supplierName: 'FurniCraft Enterprises', itemName: 'Standing Executive Desk', quantity: 3, requiredDeliveryDate: '2024-05-01', deliveryLocation: 'Bangalore Office - Floor 2', submissionDeadline: '2024-04-10', category: 'Facilities', productAvailability: 'Available', status: 'pending', declineReason: null, declineRemarks: null, createdAt: '2024-03-22' },
+  { id: 'RFQ-2024-005', rfqNumber: 'RFQ-2024-005', requestId: 'REQ-2024-011', supplierId: 'S003', supplierName: 'FurniCraft Enterprises', itemName: 'Standing Desk Converters', quantity: 12, requiredDeliveryDate: '2024-06-10', deliveryLocation: 'Bangalore Office', submissionDeadline: '2024-04-20', category: 'Facilities', productAvailability: 'Available', status: 'quoted', declineReason: null, declineRemarks: null, createdAt: '2024-03-20' },
+  { id: 'RFQ-2024-006', rfqNumber: 'RFQ-2024-006', requestId: 'REQ-2024-011', supplierId: 'S006', supplierName: 'InfraBuilders Co', itemName: 'Standing Desk Converters', quantity: 12, requiredDeliveryDate: '2024-06-10', deliveryLocation: 'Bangalore Office', submissionDeadline: '2024-04-20', category: 'Facilities', productAvailability: 'Available', status: 'quoted', declineReason: null, declineRemarks: null, createdAt: '2024-03-20' },
   { id: 'RFQ-2024-003', rfqNumber: 'RFQ-2024-003', requestId: 'REQ-2024-008', supplierId: 'S001', supplierName: 'TechnoHub India Pvt Ltd', itemName: 'Wireless Keyboard & Mouse Set', quantity: 5, requiredDeliveryDate: '2024-04-15', deliveryLocation: 'Pune Tech Park', submissionDeadline: '2024-04-02', category: 'Equipment & Assets', productAvailability: 'Available', status: 'quoted', declineReason: null, declineRemarks: null, createdAt: '2024-03-18' },
   { id: 'RFQ-2024-004', rfqNumber: 'RFQ-2024-004', requestId: 'REQ-2024-009', supplierId: 'S003', supplierName: 'FurniCraft Enterprises', itemName: 'Ergonomic Mesh Chair', quantity: 10, requiredDeliveryDate: '2024-05-10', deliveryLocation: 'Hyderabad Tech Campus', submissionDeadline: '2024-04-15', category: 'Facilities', productAvailability: 'Out of Stock', status: 'declined', declineReason: 'Out of Stock', declineRemarks: 'Item currently on backorder for 60 days', createdAt: '2024-03-21' },
 ];
 
 // ── Quotations ──
 export const quotations = [
-  { id: 'Q001', rfqId: 'RFQ-2024-003', requestId: 'REQ-2024-008', supplierId: 'S001', supplierName: 'TechnoHub India Pvt Ltd', unitPrice: 12500, items: [{ name: 'Wireless Keyboard & Mouse Set', unitPrice: 12500, quantity: 5 }], totalAmount: 62500, estimatedDeliveryTime: '5 Days', warranty: '1 Year Onsite Warranty', remarks: 'Includes express courier shipping', validUntil: '2024-04-30', status: 'pending', submittedAt: '2024-03-19' },
-  { id: 'Q002', rfqId: 'RFQ-2024-001', requestId: 'REQ-2024-001', supplierId: 'S001', supplierName: 'TechnoHub India Pvt Ltd', unitPrice: 185000, items: [{ name: 'MacBook Pro 16" M3 Pro', unitPrice: 185000, quantity: 1 }], totalAmount: 185000, estimatedDeliveryTime: '7 Days', warranty: '1 Year AppleCare Warranty', remarks: 'Official Apple authorized distributor', validUntil: '2024-04-30', status: 'accepted', submittedAt: '2024-03-04' },
-  { id: 'Q003', rfqId: 'RFQ-2024-002', requestId: 'REQ-2024-006', supplierId: 'S003', supplierName: 'FurniCraft Enterprises', unitPrice: 22000, items: [{ name: 'Ergonomic Office Chair', unitPrice: 22000, quantity: 10 }], totalAmount: 220000, estimatedDeliveryTime: '10 Days', warranty: '2 Years Replacement Warranty', remarks: 'Custom lumbar support cushion included', validUntil: '2024-05-15', status: 'accepted', submittedAt: '2024-03-10' },
-  { id: 'Q004', rfqId: 'RFQ-2024-004', requestId: 'REQ-2024-006', supplierId: 'S006', supplierName: 'InfraBuilders Co', unitPrice: 25000, items: [{ name: 'Ergonomic Office Chair', unitPrice: 25000, quantity: 10 }], totalAmount: 250000, estimatedDeliveryTime: '15 Days', warranty: '1 Year Warranty', remarks: 'Standard delivery', validUntil: '2024-05-15', status: 'rejected', submittedAt: '2024-03-10' },
+  { id: 'Q005', rfqId: 'RFQ-2024-005', requestId: 'REQ-2024-011', supplierId: 'S003', supplierName: 'FurniCraft Enterprises', unitPrice: 13500, items: [{ name: 'Standing Desk Converter', unitPrice: 13500, quantity: 12 }], totalAmount: 162000, estimatedDeliveryTime: '12 Days', warranty: '3 Years Frame Warranty', remarks: 'Installation included at no extra cost', validUntil: '2024-05-20', status: 'pending_finance', financeStatus: 'pending_finance', financeComments: null, financeReviewedBy: null, financeReviewedAt: null, selected: false, submittedAt: '2024-03-22T09:15:00' },
+  { id: 'Q006', rfqId: 'RFQ-2024-006', requestId: 'REQ-2024-011', supplierId: 'S006', supplierName: 'InfraBuilders Co', unitPrice: 14900, items: [{ name: 'Standing Desk Converter', unitPrice: 14900, quantity: 12 }], totalAmount: 178800, estimatedDeliveryTime: '8 Days', warranty: '2 Years Warranty', remarks: 'Faster delivery, installation billed separately', validUntil: '2024-05-20', status: 'pending_finance', financeStatus: 'pending_finance', financeComments: null, financeReviewedBy: null, financeReviewedAt: null, selected: false, submittedAt: '2024-03-22T11:40:00' },
+  { id: 'Q001', rfqId: 'RFQ-2024-003', requestId: 'REQ-2024-008', supplierId: 'S001', supplierName: 'TechnoHub India Pvt Ltd', unitPrice: 12500, items: [{ name: 'Wireless Keyboard & Mouse Set', unitPrice: 12500, quantity: 5 }], totalAmount: 62500, estimatedDeliveryTime: '5 Days', warranty: '1 Year Onsite Warranty', remarks: 'Includes express courier shipping', validUntil: '2024-04-30', status: 'pending_finance', financeStatus: 'pending_finance', financeComments: null, financeReviewedBy: null, financeReviewedAt: null, selected: false, submittedAt: '2024-03-19' },
+  { id: 'Q002', rfqId: 'RFQ-2024-001', requestId: 'REQ-2024-001', supplierId: 'S001', supplierName: 'TechnoHub India Pvt Ltd', unitPrice: 185000, items: [{ name: 'MacBook Pro 16" M3 Pro', unitPrice: 185000, quantity: 1 }], totalAmount: 185000, estimatedDeliveryTime: '7 Days', warranty: '1 Year AppleCare Warranty', remarks: 'Official Apple authorized distributor', validUntil: '2024-04-30', status: 'accepted', financeStatus: 'approved', financeComments: 'Rates within budget. Cleared for award.', financeReviewedBy: 'Lakshmi Iyer', financeReviewedAt: null, selected: true, submittedAt: '2024-03-04' },
+  { id: 'Q003', rfqId: 'RFQ-2024-002', requestId: 'REQ-2024-006', supplierId: 'S003', supplierName: 'FurniCraft Enterprises', unitPrice: 22000, items: [{ name: 'Ergonomic Office Chair', unitPrice: 22000, quantity: 10 }], totalAmount: 220000, estimatedDeliveryTime: '10 Days', warranty: '2 Years Replacement Warranty', remarks: 'Custom lumbar support cushion included', validUntil: '2024-05-15', status: 'accepted', financeStatus: 'approved', financeComments: 'Best value among received quotations.', financeReviewedBy: 'Lakshmi Iyer', financeReviewedAt: null, selected: true, submittedAt: '2024-03-10' },
+  { id: 'Q004', rfqId: 'RFQ-2024-004', requestId: 'REQ-2024-006', supplierId: 'S006', supplierName: 'InfraBuilders Co', unitPrice: 25000, items: [{ name: 'Ergonomic Office Chair', unitPrice: 25000, quantity: 10 }], totalAmount: 250000, estimatedDeliveryTime: '15 Days', warranty: '1 Year Warranty', remarks: 'Standard delivery', validUntil: '2024-05-15', status: 'rejected', financeStatus: 'rejected', financeComments: 'Quoted 13% above the approved estimate.', financeReviewedBy: 'Lakshmi Iyer', financeReviewedAt: null, selected: false, submittedAt: '2024-03-10' },
 ];
 
 // ── Audit Logs ──
@@ -412,6 +418,7 @@ export const tenderBids = [
 export const getStatusBadgeClass = (status) => {
   const map = {
     draft: 'badge-neutral',
+    returned: 'badge-warning',
     pending_manager: 'badge-warning',
     pending_senior_manager: 'badge-warning',
     pending_head: 'badge-warning',
@@ -430,6 +437,11 @@ export const getStatusBadgeClass = (status) => {
     failed: 'badge-danger',
     sent: 'badge-info',
     accepted: 'badge-primary',
+    pending_finance: 'badge-warning',
+    finance_approved: 'badge-success',
+    finance_rejected: 'badge-danger',
+    in_transit: 'badge-info',
+    cancelled: 'badge-danger',
     // Tender statuses
     open: 'badge-success',
     evaluation: 'badge-warning',
@@ -438,6 +450,11 @@ export const getStatusBadgeClass = (status) => {
     // Bid statuses
     submitted: 'badge-info',
     under_review: 'badge-warning',
+    // Quotation statuses
+    pending_finance: 'badge-warning',
+    finance_approved: 'badge-success',
+    not_selected: 'badge-neutral',
+    quoted: 'badge-info',
     shortlisted: 'badge-primary',
     withdrawn: 'badge-neutral',
   };
@@ -447,6 +464,7 @@ export const getStatusBadgeClass = (status) => {
 export const getStatusLabel = (status) => {
   const map = {
     draft: 'Draft',
+    returned: 'Returned for Correction',
     pending_manager: 'Pending Manager',
     pending_senior_manager: 'Pending Sr. Manager',
     pending_head: 'Pending Head',
@@ -463,8 +481,13 @@ export const getStatusLabel = (status) => {
     processing: 'Processing',
     pending: 'Pending',
     failed: 'Failed',
-    sent: 'Sent',
+    sent: 'Issued to Supplier',
     accepted: 'Accepted',
+    pending_finance: 'Pending Finance Approval',
+    finance_approved: 'Finance Approved',
+    finance_rejected: 'Finance Rejected',
+    in_transit: 'In Transit',
+    cancelled: 'Cancelled',
     // Tender statuses
     open: 'Open',
     evaluation: 'Under Evaluation',
@@ -473,6 +496,11 @@ export const getStatusLabel = (status) => {
     // Bid statuses
     submitted: 'Submitted',
     under_review: 'Under Review',
+    // Quotation statuses
+    pending_finance: 'Pending Finance Approval',
+    finance_approved: 'Approved by Finance',
+    not_selected: 'Not Selected',
+    quoted: 'Quotation Received',
     shortlisted: 'Shortlisted',
     withdrawn: 'Withdrawn',
   };

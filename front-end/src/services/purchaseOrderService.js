@@ -1,5 +1,10 @@
 import { apiCall, isMockMode } from './apiConfig';
 import { purchaseOrders as mockPOs } from '../data/mockData';
+import {
+  processPurchaseOrder as storeProcessPo,
+  getPurchaseOrdersForUser,
+  availablePoActions,
+} from '../store/epsStore';
 
 // ============================================
 // Purchase Order Service
@@ -98,3 +103,26 @@ export const updatePOStatus = async (id, status) => {
     return { message: 'Status updated', newStatus: status };
   }
 };
+
+/**
+ * PATCH /purchase-orders/:id/process
+ * Request Body: { "status": "string", "remarks": "string" }
+ * Progresses the PO through its lifecycle; only central procurement or the
+ * department team designated for the PO's category may call it.
+ */
+export const processPurchaseOrder = async (id, status, user, remarks = '') => {
+  // return apiCall(`/purchase-orders/${id}/process`, { method: 'PATCH', body: JSON.stringify({ status, remarks }) });
+  if (isMockMode()) {
+    return storeProcessPo(id, status, user, remarks);
+  }
+};
+
+/** Purchase orders the signed-in user's team is allowed to work on. */
+export const getMyPurchaseOrders = async (user, filters = {}) => {
+  if (isMockMode()) {
+    const content = getPurchaseOrdersForUser(user, filters);
+    return { content, totalElements: content.length };
+  }
+};
+
+export const getPoActions = (po, user) => availablePoActions(po, user);

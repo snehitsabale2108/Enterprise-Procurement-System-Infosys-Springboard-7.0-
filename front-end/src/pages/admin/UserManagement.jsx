@@ -1,18 +1,31 @@
 import { useState } from 'react';
-import { users as initialUsers, departments, roles, formatDate, getStatusBadgeClass } from '../../data/mockData';
-import { Plus, Search, Edit2, Trash2, X, UserCheck, UserX } from 'lucide-react';
+import { departments, roles, formatDate } from '../../data/mockData';
+import { useAuth } from '../../contexts/AuthContext';
+import {
+  useEpsStore, getUsers, saveUser, assignRole, setUserStatus, getAuditTrail,
+} from '../../store/epsStore';
+import { Plus, Search, Edit2, X, UserCheck, UserX, ShieldCheck } from 'lucide-react';
+import AuditTrail from '../../components/AuditTrail';
 
 const emptyForm = { name: '', email: '', phone: '', role: 'employee', department: '', status: 'active' };
 
+const roleLabel = (name) => roles.find((r) => r.name === name)?.displayName || String(name).replace(/_/g, ' ');
+
 const UserManagement = () => {
-  const [userList, setUserList] = useState([...initialUsers]);
+  const { currentUser } = useAuth();
+  useEpsStore();
+
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [deptFilter, setDeptFilter] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editingUser, setEditingUser] = useState(null);
   const [form, setForm] = useState({ ...emptyForm });
+  const [assigning, setAssigning] = useState(null); // { user, role }
+  const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
 
+  const userList = getUsers();
   const filtered = userList.filter(u => {
     if (search && !u.name.toLowerCase().includes(search.toLowerCase()) && !u.email.toLowerCase().includes(search.toLowerCase())) return false;
     if (roleFilter && u.role !== roleFilter) return false;
@@ -20,27 +33,38 @@ const UserManagement = () => {
     return true;
   });
 
-  const openCreate = () => { setEditingUser(null); setForm({ ...emptyForm }); setShowModal(true); };
-  const openEdit = (user) => { setEditingUser(user); setForm({ name: user.name, email: user.email, phone: user.phone, role: user.role, department: user.department, status: user.status }); setShowModal(true); };
+  const openCreate = () => { setEditingUser(null); setForm({ ...emptyForm }); setError(''); setShowModal(true); };
+  const openEdit = (user) => {
+    setEditingUser(user);
+    setForm({ name: user.name, email: user.email, phone: user.phone || '', role: user.role, department: user.department, status: user.status });
+    setError('');
+    setShowModal(true);
+  };
 
   const handleSave = () => {
-    if (!form.name || !form.email) return;
-    if (editingUser) {
-      setUserList(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...form } : u));
-    } else {
-      const newUser = { id: `U${String(userList.length + 1).padStart(3, '0')}`, ...form, avatar: `hsl(${Math.random() * 360}, 60%, 55%)`, createdAt: new Date().toISOString().split('T')[0] };
-      setUserList(prev => [...prev, newUser]);
+    if (!form.name || !form.email) { setError('Name and email are required'); return; }
+    try {
+      saveUser(form, currentUser, editingUser?.id || null);
+      setShowModal(false);
+      setInfo(editingUser ? `${form.name} updated — role: ${roleLabel(form.role)}` : `${form.name} created as ${roleLabel(form.role)}`);
+    } catch (err) {
+      setError(err.message);
     }
-    setShowModal(false);
+  };
+
+  const confirmAssign = () => {
+    try {
+      assignRole(assigning.user.id, assigning.role, currentUser);
+      setInfo(`${assigning.user.name} is now a ${roleLabel(assigning.role)}. Their dashboard now follows this role.`);
+      setAssigning(null);
+      setError('');
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const toggleStatus = (user) => {
-    setUserList(prev => prev.map(u => u.id === user.id ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' } : u));
-  };
-
-  const deleteUser = (user) => {
-    if (!confirm(`Delete user "${user.name}"?`)) return;
-    setUserList(prev => prev.filter(u => u.id !== user.id));
+    setUserStatus(user.id, user.status === 'active' ? 'inactive' : 'active', currentUser);
   };
 
   const uniqueDepts = [...new Set(userList.map(u => u.department))].sort();
@@ -48,9 +72,12 @@ const UserManagement = () => {
   return (
     <div className="page">
       <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div><h1>User Management</h1><p>Manage system users and their roles</p></div>
+        <div><h1>User Management</h1><p>Create users, assign roles and manage access. Assigning a role instantly switches that user's dashboard and permissions.</p></div>
         <button className="btn btn-primary" onClick={openCreate}><Plus size={18} /> Add User</button>
       </div>
+
+      {info && <div className="alert alert-success" style={{ marginBottom: 'var(--space-md)', color: 'var(--success)' }}>{info}</div>}
+      {error && !showModal && !assigning && <div className="alert" style={{ marginBottom: 'var(--space-md)', color: 'var(--danger)' }}>{error}</div>}
 
       <div className="filter-bar">
         <div className="search-box" style={{ flex: 1, maxWidth: 360 }}>
@@ -70,7 +97,7 @@ const UserManagement = () => {
       <div className="table-container">
         <table>
           <thead>
-            <tr><th>User</th><th>Email</th><th>Role</th><th>Department</th><th>Status</th><th>Joined</th><th style={{ textAlign: 'right' }}>Actions</th></tr>
+            <tr><th>User</th><th>Email</th><th>Assigned Role</th><th>Department</th><th>Status</th><th>Joined</th><th style={{ textAlign: 'right' }}>Actions</th></tr>
           </thead>
           <tbody>
             {filtered.length === 0 ? (
@@ -87,7 +114,17 @@ const UserManagement = () => {
                   </div>
                 </td>
                 <td style={{ color: 'var(--text-secondary)' }}>{u.email}</td>
-                <td><span className="badge badge-primary">{u.role.replace(/_/g, ' ')}</span></td>
+                <td>
+                  <select
+                    className="form-select"
+                    data-testid={`role-select-${u.id}`}
+                    value={u.role}
+                    onChange={(e) => setAssigning({ user: u, role: e.target.value })}
+                    style={{ minWidth: 190 }}
+                  >
+                    {roles.map(r => <option key={r.id} value={r.name}>{r.displayName}</option>)}
+                  </select>
+                </td>
                 <td>{u.department}</td>
                 <td><span className={`badge ${u.status === 'active' ? 'badge-success' : 'badge-neutral'}`}>{u.status}</span></td>
                 <td style={{ color: 'var(--text-muted)', fontSize: 'var(--font-sm)' }}>{formatDate(u.createdAt)}</td>
@@ -97,7 +134,6 @@ const UserManagement = () => {
                     <button className="btn btn-ghost btn-sm" title={u.status === 'active' ? 'Deactivate' : 'Activate'} onClick={() => toggleStatus(u)}>
                       {u.status === 'active' ? <UserX size={15} color="var(--warning)" /> : <UserCheck size={15} color="var(--success)" />}
                     </button>
-                    <button className="btn btn-ghost btn-sm" title="Delete" onClick={() => deleteUser(u)}><Trash2 size={15} color="var(--danger)" /></button>
                   </div>
                 </td>
               </tr>
@@ -105,6 +141,26 @@ const UserManagement = () => {
           </tbody>
         </table>
       </div>
+
+      {assigning && (
+        <div className="modal-overlay" onClick={() => setAssigning(null)}>
+          <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 480 }}>
+            <div className="modal-header">
+              <h2 className="modal-title"><ShieldCheck size={18} /> Assign Role</h2>
+              <button className="btn btn-ghost btn-sm" onClick={() => setAssigning(null)}><X size={18} /></button>
+            </div>
+            <p style={{ color: 'var(--text-secondary)' }}>
+              Change <strong>{assigning.user.name}</strong> from <strong>{roleLabel(assigning.user.role)}</strong> to{' '}
+              <strong>{roleLabel(assigning.role)}</strong>? Their dashboard, navigation and permissions will switch to the new role immediately.
+            </p>
+            {error && <p style={{ color: 'var(--danger)', fontSize: 'var(--font-sm)' }}>{error}</p>}
+            <div className="modal-footer">
+              <button className="btn btn-secondary" onClick={() => setAssigning(null)}>Cancel</button>
+              <button className="btn btn-primary" data-testid="confirm-assign-role" onClick={confirmAssign}>Assign Role</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)}>
@@ -129,7 +185,7 @@ const UserManagement = () => {
                 <input className="form-input" value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} placeholder="Enter phone number" />
               </div>
               <div className="form-group">
-                <label className="form-label">Role</label>
+                <label className="form-label">Role *</label>
                 <select className="form-select" value={form.role} onChange={e => setForm({ ...form, role: e.target.value })}>
                   {roles.map(r => <option key={r.id} value={r.name}>{r.displayName}</option>)}
                 </select>
@@ -151,6 +207,7 @@ const UserManagement = () => {
                 </select>
               </div>
             </div>
+            {error && <p style={{ color: 'var(--danger)', fontSize: 'var(--font-sm)' }}>{error}</p>}
             <div className="modal-footer">
               <button className="btn btn-secondary" onClick={() => setShowModal(false)}>Cancel</button>
               <button className="btn btn-primary" onClick={handleSave}>{editingUser ? 'Save Changes' : 'Create User'}</button>
@@ -158,6 +215,10 @@ const UserManagement = () => {
           </div>
         </div>
       )}
+
+      <div style={{ marginTop: 'var(--space-xl)' }}>
+        <AuditTrail entries={getAuditTrail().filter(a => a.entity === 'User').slice(0, 15)} title="Recent Role & User Changes" />
+      </div>
     </div>
   );
 };

@@ -11,6 +11,7 @@ import CreateRequest from './pages/requests/CreateRequest';
 import RequestDetail from './pages/requests/RequestDetail';
 import ApprovalQueue from './pages/approvals/ApprovalQueue';
 import ProcurementQueue from './pages/procurement/ProcurementQueue';
+import VendorSelection from './pages/procurement/VendorSelection';
 import EquipmentWorkflow from './pages/procurement/EquipmentWorkflow';
 import SoftwareWorkflow from './pages/procurement/SoftwareWorkflow';
 import FacilitiesWorkflow from './pages/procurement/FacilitiesWorkflow';
@@ -22,6 +23,8 @@ import PurchaseOrderDetail from './pages/orders/PurchaseOrderDetail';
 import GoodsReceiptList from './pages/grn/GoodsReceiptList';
 import InvoiceVerification from './pages/finance/InvoiceVerification';
 import PaymentProcessing from './pages/finance/PaymentProcessing';
+import QuotationApprovals from './pages/finance/QuotationApprovals';
+import PurchaseOrderApprovals from './pages/finance/PurchaseOrderApprovals';
 import UserManagement from './pages/admin/UserManagement';
 import RoleManagement from './pages/admin/RoleManagement';
 import DepartmentManagement from './pages/admin/DepartmentManagement';
@@ -55,12 +58,14 @@ function App() {
             <Route path="requests" element={<RequestList />} />
             <Route path="requests/create" element={<CreateRequest />} />
             <Route path="requests/:id" element={<RequestDetail />} />
+            <Route path="requests/:id/edit" element={<CreateRequest />} />
             
             {/* Approvals */}
             <Route path="approvals" element={<ApprovalQueue />} />
             
             {/* Procurement */}
             <Route path="procurement" element={<ProcurementQueue />} />
+            <Route path="procurement/vendor-selection/:id" element={<VendorSelection />} />
             <Route path="procurement/equipment" element={<EquipmentWorkflow />} />
             <Route path="procurement/software" element={<SoftwareWorkflow />} />
             <Route path="procurement/facilities" element={<FacilitiesWorkflow />} />
@@ -79,6 +84,8 @@ function App() {
             {/* Finance */}
             <Route path="finance" element={<InvoiceVerification />} />
             <Route path="finance/payments" element={<PaymentProcessing />} />
+            <Route path="finance/quotations" element={<QuotationApprovals />} />
+            <Route path="finance/purchase-orders" element={<PurchaseOrderApprovals />} />
             
             {/* Admin */}
             <Route path="admin/users" element={<UserManagement />} />
