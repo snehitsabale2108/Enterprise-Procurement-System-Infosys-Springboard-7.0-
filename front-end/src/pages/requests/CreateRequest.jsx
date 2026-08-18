@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { categories } from '../../data/mockData';
+import { createRequest, submitRequest } from '../../services/requestService';
 import { Save, Send, ArrowLeft } from 'lucide-react';
 
 const CreateRequest = () => {
@@ -9,6 +10,8 @@ const CreateRequest = () => {
   const navigate = useNavigate();
   const [form, setForm] = useState({ title: '', description: '', reason: '', category: '', subcategory: '', quantity: 1, estimatedCost: '', requiredDate: '', priority: 'medium' });
   const [subcategories, setSubcategories] = useState([]);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
 
   const handleCategoryChange = (e) => {
     const cat = categories.find(c => c.name === e.target.value);
@@ -16,9 +19,37 @@ const CreateRequest = () => {
     setSubcategories(cat ? cat.subcategories : []);
   };
 
-  const handleSubmit = (status) => {
-    alert(`Request ${status === 'draft' ? 'saved as draft' : 'submitted'} successfully!`);
-    navigate('/requests');
+  const handleSubmit = async (status) => {
+    if (!form.title || !form.description || !form.reason || !form.category || !form.subcategory || !form.estimatedCost) {
+      setError('Please fill in all required fields (*) before saving.');
+      return;
+    }
+
+    setError('');
+    setSaving(true);
+    try {
+      const payload = {
+        ...form,
+        quantity: Number(form.quantity) || 1,
+        estimatedCost: Number(form.estimatedCost) || 0,
+        department: currentUser?.department || '',
+        createdBy: currentUser?.id,
+        status: 'draft', // requests are always created as drafts, then submitted below
+      };
+
+      const created = await createRequest(payload);
+
+      if (status === 'pending_manager') {
+        await submitRequest(created.id);
+      }
+
+      alert(`Request ${status === 'draft' ? 'saved as draft' : 'submitted'} successfully!`);
+      navigate('/requests');
+    } catch (err) {
+      setError(err.message || 'Failed to save request. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -105,9 +136,15 @@ const CreateRequest = () => {
           </div>
         )}
 
+        {error && (
+          <div className="card" style={{ background: 'var(--danger-bg, #fdecea)', color: 'var(--danger, #c0392b)', marginTop: 'var(--space-md)' }}>
+            {error}
+          </div>
+        )}
+
         <div style={{ display: 'flex', gap: 'var(--space-md)', marginTop: 'var(--space-xl)', justifyContent: 'flex-end' }}>
-          <button className="btn btn-secondary" onClick={() => handleSubmit('draft')}><Save size={16} /> Save Draft</button>
-          <button className="btn btn-primary" onClick={() => handleSubmit('pending_manager')}><Send size={16} /> Submit Request</button>
+          <button className="btn btn-secondary" disabled={saving} onClick={() => handleSubmit('draft')}><Save size={16} /> Save Draft</button>
+          <button className="btn btn-primary" disabled={saving} onClick={() => handleSubmit('pending_manager')}><Send size={16} /> Submit Request</button>
         </div>
       </div>
     </div>

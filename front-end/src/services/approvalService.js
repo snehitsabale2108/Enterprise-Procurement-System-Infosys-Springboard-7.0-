@@ -1,5 +1,23 @@
 import { apiCall, isMockMode } from './apiConfig';
-import { approvalHistory as mockHistory, requests as mockRequests } from '../data/mockData';
+import { approvalHistory as mockHistory, requests as mockRequests, users as mockUsers } from '../data/mockData';
+import { persist } from '../data/mockPersistence';
+
+const addHistoryRecord = (requestId, approverRole, action, comments) => {
+  const role = (approverRole || 'manager').replace('-', '_');
+  const approver = mockUsers.find(u => u.role === role);
+  const record = {
+    id: `AH${String(mockHistory.length + 1).padStart(3, '0')}`,
+    requestId,
+    approverName: approver?.name || 'System Approver',
+    approverRole: role,
+    action,
+    comments: comments || '',
+    timestamp: new Date().toISOString(),
+  };
+  mockHistory.push(record);
+  persist('approvalHistory', mockHistory);
+  return record;
+};
 
 // ============================================
 // Approval Service
@@ -88,7 +106,10 @@ export const approveRequest = async (requestId, comments, approverRole) => {
       pending_head: 'approved',
     };
     request.status = nextStatus[request.status] || 'approved';
-    return { message: 'Request approved', newStatus: request.status };
+    request.updatedAt = new Date().toISOString();
+    const record = addHistoryRecord(requestId, approverRole, 'approved', comments);
+    persist('requests', mockRequests);
+    return { message: 'Request approved', newStatus: request.status, approvalRecord: record };
   }
 };
 
@@ -117,8 +138,14 @@ export const rejectRequest = async (requestId, comments, approverRole) => {
   // ── Mock ──
   if (isMockMode()) {
     const request = mockRequests.find(r => r.id === requestId);
-    if (request) request.status = 'rejected';
-    return { message: 'Request rejected', newStatus: 'rejected' };
+    let record = null;
+    if (request) {
+      request.status = 'rejected';
+      request.updatedAt = new Date().toISOString();
+      record = addHistoryRecord(requestId, approverRole, 'rejected', comments);
+      persist('requests', mockRequests);
+    }
+    return { message: 'Request rejected', newStatus: 'rejected', approvalRecord: record };
   }
 };
 
@@ -147,7 +174,13 @@ export const returnRequest = async (requestId, comments, approverRole) => {
   // ── Mock ──
   if (isMockMode()) {
     const request = mockRequests.find(r => r.id === requestId);
-    if (request) request.status = 'draft';
-    return { message: 'Request returned for correction', newStatus: 'draft' };
+    let record = null;
+    if (request) {
+      request.status = 'draft';
+      request.updatedAt = new Date().toISOString();
+      record = addHistoryRecord(requestId, approverRole, 'returned', comments);
+      persist('requests', mockRequests);
+    }
+    return { message: 'Request returned for correction', newStatus: 'draft', approvalRecord: record };
   }
 };

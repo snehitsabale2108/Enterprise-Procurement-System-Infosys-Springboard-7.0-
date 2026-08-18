@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { users } from '../data/mockData';
+import { persist } from '../data/mockPersistence';
 
 const AuthContext = createContext(null);
 
@@ -44,7 +45,7 @@ export const AuthProvider = ({ children }) => {
     return user;
   };
 
-  // Register mock (adds to session only — not persisted across reloads in mock mode)
+  // Register mock (persisted to localStorage so the account survives logout/reload)
   const register = (name, email, password, department) => {
     if (!name || !email || !password) throw new Error('All fields are required');
     const existing = users.find(u => u.email.toLowerCase() === email.toLowerCase());
@@ -57,6 +58,7 @@ export const AuthProvider = ({ children }) => {
       createdAt: new Date().toISOString().split('T')[0],
     };
     users.push(newUser); // add to mock data array
+    persist('users', users);
     setCurrentUser(newUser);
     localStorage.setItem('eps_user', JSON.stringify(newUser));
     localStorage.setItem('eps_token', `mock-jwt-${newUser.id}-${Date.now()}`);

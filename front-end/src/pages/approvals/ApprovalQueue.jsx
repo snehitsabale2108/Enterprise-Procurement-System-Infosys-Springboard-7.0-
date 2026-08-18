@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { requests, users, formatCurrency, getStatusLabel } from '../../data/mockData';
+import { users, formatCurrency, getStatusLabel } from '../../data/mockData';
+import { getPendingApprovals, approveRequest, rejectRequest, returnRequest } from '../../services/approvalService';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, XCircle, RotateCcw, MessageSquare } from 'lucide-react';
 
@@ -10,10 +11,21 @@ const ApprovalQueue = () => {
   const [showModal, setShowModal] = useState(null);
   const [comments, setComments] = useState('');
   const [action, setAction] = useState('');
+  const [pendingRequests, setPendingRequests] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
-  const statusMap = { manager: 'pending_manager', senior_manager: 'pending_senior_manager', head: 'pending_head' };
-  const pendingStatus = statusMap[currentUser?.role];
-  const pendingRequests = requests.filter(r => r.status === pendingStatus);
+  const loadPending = async () => {
+    setLoading(true);
+    const result = await getPendingApprovals(currentUser?.role);
+    setPendingRequests(result?.content || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    loadPending();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentUser?.role]);
 
   const handleAction = (requestId, act) => {
     setShowModal(requestId);
@@ -21,20 +33,25 @@ const ApprovalQueue = () => {
     setComments('');
   };
 
-  const confirmAction = () => {
-    const req = requests.find(r => r.id === showModal);
-    if (req) {
+  const confirmAction = async () => {
+    if (!showModal) return;
+    setSubmitting(true);
+    try {
       if (action === 'approve') {
-        const next = { pending_manager: req.estimatedCost > 50000 ? 'pending_senior_manager' : 'approved', pending_senior_manager: req.estimatedCost > 200000 ? 'pending_head' : 'approved', pending_head: 'approved' };
-        req.status = next[req.status] || 'approved';
+        await approveRequest(showModal, comments, currentUser?.role);
       } else if (action === 'reject') {
-        req.status = 'rejected';
+        await rejectRequest(showModal, comments, currentUser?.role);
       } else {
-        req.status = 'draft';
+        await returnRequest(showModal, comments, currentUser?.role);
       }
+      alert(`Request ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'returned'} successfully!`);
+      setShowModal(null);
+      await loadPending();
+    } catch (err) {
+      alert(err.message || 'Action failed. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
-    setShowModal(null);
-    alert(`Request ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'returned'} successfully!`);
   };
 
   return (
@@ -44,7 +61,9 @@ const ApprovalQueue = () => {
         <p>{pendingRequests.length} request(s) pending your approval</p>
       </div>
 
-      {pendingRequests.length === 0 ? (
+      {loading ? (
+        <div className="card"><div className="empty-state"><p>Loading...</p></div></div>
+      ) : pendingRequests.length === 0 ? (
         <div className="card"><div className="empty-state"><CheckCircle size={48} /><h3>All caught up!</h3><p>No requests pending your approval</p></div></div>
       ) : (
         <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
@@ -84,8 +103,8 @@ const ApprovalQueue = () => {
               <textarea className="form-textarea" placeholder={`Add ${action} comments...`} value={comments} onChange={e => setComments(e.target.value)} />
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowModal(null)}>Cancel</button>
-              <button className={`btn ${action === 'approve' ? 'btn-success' : action === 'reject' ? 'btn-danger' : 'btn-warning'}`} onClick={confirmAction}>
+              <button className="btn btn-secondary" disabled={submitting} onClick={() => setShowModal(null)}>Cancel</button>
+              <button className={`btn ${action === 'approve' ? 'btn-success' : action === 'reject' ? 'btn-danger' : 'btn-warning'}`} disabled={submitting} onClick={confirmAction}>
                 Confirm {action.charAt(0).toUpperCase() + action.slice(1)}
               </button>
             </div>

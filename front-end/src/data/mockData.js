@@ -1,6 +1,7 @@
 // ============================================
 // EPS Mock Data — Complete Procurement System
 // ============================================
+import { hydrate } from './mockPersistence';
 
 // ── Users ──
 export const users = [
@@ -506,3 +507,14 @@ export const formatDateTime = (dateStr) => {
     minute: '2-digit',
   });
 };
+
+// ============================================
+// Hydrate mutable mock "tables" from localStorage
+// ============================================
+// Restores anything created/updated in a previous session or another tab
+// (e.g. procurement requests, approval history) so it isn't lost on
+// refresh. Must run after the arrays above are defined since it mutates
+// them in place. See mockPersistence.js.
+hydrate('requests', requests);
+hydrate('approvalHistory', approvalHistory);
+hydrate('users', users);

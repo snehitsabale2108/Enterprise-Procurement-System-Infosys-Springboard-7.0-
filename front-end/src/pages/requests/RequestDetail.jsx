@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import {
-  requests, approvalHistory, users, tenders,
+  requests, users, tenders,
   formatCurrency, formatDate, formatDateTime, getStatusBadgeClass, getStatusLabel
 } from '../../data/mockData';
+import { getApprovalHistory, cancelRequest } from '../../services/requestService';
+import { approveRequest, rejectRequest, returnRequest } from '../../services/approvalService';
 import {
   ArrowLeft, Calendar, Tag, Hash, IndianRupee, Building2, User,
   CheckCircle, XCircle, RotateCcw, Gavel, Plus, MessageSquare
@@ -17,10 +19,22 @@ const RequestDetail = () => {
   const [showActionModal, setShowActionModal] = useState(false);
   const [actionType, setActionType] = useState('');
   const [comments, setComments] = useState('');
+  const [currentHistory, setCurrentHistory] = useState([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [, forceRefresh] = useState(0);
 
   const request = requests.find(r => r.id === id);
-  const history = approvalHistory.filter(h => h.requestId === id);
   const creator = users.find(u => u.id === request?.createdBy);
+
+  const loadHistory = async () => {
+    const h = await getApprovalHistory(id);
+    setCurrentHistory(h || []);
+  };
+
+  useEffect(() => {
+    loadHistory();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   if (!request) return <div className="page"><div className="empty-state"><h3>Request not found</h3></div></div>;
 
@@ -45,51 +59,27 @@ const RequestDetail = () => {
     setShowActionModal(true);
   };
 
-  const confirmAction = () => {
-    if (actionType === 'approve') {
-      const next = {
-        pending_manager: request.estimatedCost > 50000 ? 'pending_senior_manager' : 'approved',
-        pending_senior_manager: request.estimatedCost > 200000 ? 'pending_head' : 'approved',
-        pending_head: 'approved',
-      };
-      request.status = next[request.status] || 'approved';
-      // Add to approval history
-      approvalHistory.push({
-        id: `AH${String(approvalHistory.length + 1).padStart(3, '0')}`,
-        requestId: id,
-        approverName: currentUser?.name,
-        approverRole: role,
-        action: 'approved',
-        comments: comments || 'Approved from request detail page.',
-        timestamp: new Date().toISOString(),
-      });
-    } else if (actionType === 'reject') {
-      request.status = 'rejected';
-      approvalHistory.push({
-        id: `AH${String(approvalHistory.length + 1).padStart(3, '0')}`,
-        requestId: id,
-        approverName: currentUser?.name,
-        approverRole: role,
-        action: 'rejected',
-        comments: comments || 'Rejected.',
-        timestamp: new Date().toISOString(),
-      });
-    } else if (actionType === 'return') {
-      request.status = 'draft';
-      approvalHistory.push({
-        id: `AH${String(approvalHistory.length + 1).padStart(3, '0')}`,
-        requestId: id,
-        approverName: currentUser?.name,
-        approverRole: role,
-        action: 'returned',
-        comments: comments || 'Returned for correction.',
-        timestamp: new Date().toISOString(),
-      });
-    } else if (actionType === 'cancel') {
-      request.status = 'cancelled';
+  const confirmAction = async () => {
+    setSubmitting(true);
+    try {
+      if (actionType === 'approve') {
+        await approveRequest(id, comments || 'Approved from request detail page.', role);
+      } else if (actionType === 'reject') {
+        await rejectRequest(id, comments, role);
+      } else if (actionType === 'return') {
+        await returnRequest(id, comments, role);
+      } else if (actionType === 'cancel') {
+        await cancelRequest(id);
+      }
+      setShowActionModal(false);
+      await loadHistory();
+      forceRefresh(n => n + 1); // re-render to reflect the updated request.status
+      alert(`Request ${actionType === 'approve' ? 'approved' : actionType === 'reject' ? 'rejected' : actionType === 'return' ? 'returned' : 'cancelled'} successfully!`);
+    } catch (err) {
+      alert(err.message || 'Action failed. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
-    setShowActionModal(false);
-    alert(`Request ${actionType === 'approve' ? 'approved' : actionType === 'reject' ? 'rejected' : actionType === 'return' ? 'returned' : 'cancelled'} successfully!`);
   };
 
   const details = [
@@ -102,9 +92,6 @@ const RequestDetail = () => {
     { icon: User, label: 'Requested By', value: creator?.name || request.createdBy },
     { icon: Calendar, label: 'Created', value: formatDate(request.createdAt) },
   ];
-
-  // Re-read updated history after potential mutations
-  const currentHistory = approvalHistory.filter(h => h.requestId === id);
 
   return (
     <div className="page" style={{ maxWidth: 900 }}>
@@ -246,11 +233,11 @@ const RequestDetail = () => {
               />
             </div>
             <div className="modal-footer">
-              <button className="btn btn-secondary" onClick={() => setShowActionModal(false)}>Cancel</button>
+              <button className="btn btn-secondary" disabled={submitting} onClick={() => setShowActionModal(false)}>Cancel</button>
               <button
                 className={`btn ${actionType === 'approve' ? 'btn-success' : actionType === 'reject' || actionType === 'cancel' ? 'btn-danger' : 'btn-warning'}`}
                 onClick={confirmAction}
-                disabled={['reject', 'return'].includes(actionType) && !comments.trim()}
+                disabled={submitting || (['reject', 'return'].includes(actionType) && !comments.trim())}
               >
                 Confirm {actionType.charAt(0).toUpperCase() + actionType.slice(1)}
               </button>

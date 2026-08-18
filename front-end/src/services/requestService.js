@@ -1,5 +1,6 @@
 import { apiCall, isMockMode } from './apiConfig';
 import { requests as mockRequests, approvalHistory as mockHistory } from '../data/mockData';
+import { persist } from '../data/mockPersistence';
 
 // ============================================
 // Request Service
@@ -104,6 +105,7 @@ export const createRequest = async (data) => {
       updatedAt: new Date().toISOString(),
     };
     mockRequests.push(newRequest);
+    persist('requests', mockRequests);
     return newRequest;
   }
 };
@@ -125,6 +127,7 @@ export const updateRequest = async (id, data) => {
     const index = mockRequests.findIndex(r => r.id === id);
     if (index === -1) throw new Error('Request not found');
     mockRequests[index] = { ...mockRequests[index], ...data, updatedAt: new Date().toISOString() };
+    persist('requests', mockRequests);
     return mockRequests[index];
   }
 };
@@ -140,7 +143,11 @@ export const submitRequest = async (id) => {
   // ── Mock ──
   if (isMockMode()) {
     const request = mockRequests.find(r => r.id === id);
-    if (request) request.status = 'pending_manager';
+    if (request) {
+      request.status = 'pending_manager';
+      request.updatedAt = new Date().toISOString();
+      persist('requests', mockRequests);
+    }
     return { message: 'Request submitted', status: 'pending_manager' };
   }
 };
@@ -156,7 +163,11 @@ export const cancelRequest = async (id) => {
   // ── Mock ──
   if (isMockMode()) {
     const request = mockRequests.find(r => r.id === id);
-    if (request) request.status = 'cancelled';
+    if (request) {
+      request.status = 'cancelled';
+      request.updatedAt = new Date().toISOString();
+      persist('requests', mockRequests);
+    }
     return { message: 'Request cancelled' };
   }
 };
