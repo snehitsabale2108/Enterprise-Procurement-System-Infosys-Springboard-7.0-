@@ -53,6 +53,12 @@ public class RequestController {
         return requests.cancel(id);
     }
 
+    /** Suggested (mandatory) category/subcategory for an item title. */
+    @GetMapping("/classify")
+    public Map<String, String> classify(@RequestParam String title) {
+        return requests.classify(title);
+    }
+
     @GetMapping("/{id}/approval-history")
     public List<ApprovalRecord> history(@PathVariable String id) {
         return requests.approvalHistory(id);

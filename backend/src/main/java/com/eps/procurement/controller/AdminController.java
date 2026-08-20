@@ -92,7 +92,8 @@ public class AdminController {
     @GetMapping("/audit-logs")
     public Map<String, Object> auditLogs(@RequestParam(required = false) String userId,
                                          @RequestParam(required = false) String action,
-                                         @RequestParam(required = false) String entity) {
-        return audit.search(userId, action, entity);
+                                         @RequestParam(required = false) String entity,
+                                         @RequestParam(required = false) String entityId) {
+        return audit.search(userId, action, entity, entityId);
     }
 }
