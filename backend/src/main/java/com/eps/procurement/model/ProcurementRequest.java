@@ -18,6 +18,20 @@ public class ProcurementRequest {
     public String updatedAt;
     public String priority;
 
+    // ── Return-for-correction trail (draft becomes editable again) ──
+    public String returnComments;
+    public String returnedBy;
+    public String returnedByRole;
+    public String returnedAt;
+    public String returnedFromStatus;
+
+    // ── Procurement stage tracking ──
+    public String procurementStage;   // "rfq_pending"|"quotations_received"|"finance_review"|"vendor_selected"|"po_created"
+    public String selectedQuotationId;
+    public String selectedSupplierId;
+    public String selectedSupplierName;
+    public String poId;
+
     public ProcurementRequest() {}
 
     public ProcurementRequest(String id, String title, String description, String reason, String category,

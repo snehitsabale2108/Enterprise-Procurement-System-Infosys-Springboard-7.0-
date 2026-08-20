@@ -20,6 +20,13 @@ public class Quotation {
     public String status;
     public String submittedAt;
 
+    // ── Finance review of the quotation ──
+    public String financeStatus = "pending_finance"; // "pending_finance"|"approved"|"rejected"
+    public String financeComments;
+    public String financeReviewedBy;
+    public String financeReviewedAt;
+    public boolean selected;
+
     public Quotation() {}
 
     public Quotation(String id, String rfqId, String requestId, String supplierId, String supplierName,
@@ -39,5 +46,8 @@ public class Quotation {
         this.validUntil = validUntil;
         this.status = status;
         this.submittedAt = submittedAt;
+        this.financeStatus = "accepted".equalsIgnoreCase(status) ? "approved"
+                : "rejected".equalsIgnoreCase(status) ? "rejected" : "pending_finance";
+        this.selected = "accepted".equalsIgnoreCase(status);
     }
 }

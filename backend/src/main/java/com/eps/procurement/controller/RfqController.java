@@ -31,8 +31,9 @@ public class RfqController {
     }
 
     @PostMapping
-    public ResponseEntity<Rfq> create(@RequestBody Rfq payload) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(procurement.createRfq(payload));
+    public ResponseEntity<Rfq> create(@RequestBody Rfq payload,
+                                      @RequestParam(required = false) String actorId) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(procurement.createRfq(payload, actorId));
     }
 
     @PatchMapping("/{id}/availability")

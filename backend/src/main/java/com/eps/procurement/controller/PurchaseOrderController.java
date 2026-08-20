@@ -1,7 +1,6 @@
 package com.eps.procurement.controller;
 
 import com.eps.procurement.model.PurchaseOrder;
-import com.eps.procurement.model.Quotation;
 import com.eps.procurement.service.ProcurementService;
 import java.util.List;
 import java.util.Map;
@@ -15,15 +14,45 @@ import org.springframework.web.bind.annotation.*;
 public class PurchaseOrderController {
 
     private final ProcurementService procurement;
+    private final com.eps.procurement.service.AuditService audit;
 
-    public PurchaseOrderController(ProcurementService procurement) {
+    public PurchaseOrderController(ProcurementService procurement,
+                                   com.eps.procurement.service.AuditService audit) {
         this.procurement = procurement;
+        this.audit = audit;
     }
 
     @GetMapping("/purchase-orders")
     public Map<String, Object> list(@RequestParam(required = false) String status,
-                                    @RequestParam(required = false) String supplierId) {
+                                    @RequestParam(required = false) String supplierId,
+                                    @RequestParam(required = false) String actorId) {
+        if (actorId != null && !actorId.isBlank()) {
+            return procurement.purchaseOrdersForActor(actorId, status);
+        }
         return procurement.searchPurchaseOrders(status, supplierId);
+    }
+
+    /** Legal next statuses for a purchase order. */
+    @GetMapping("/purchase-orders/{id}/transitions")
+    public Map<String, Object> transitions(@PathVariable String id) {
+        return procurement.purchaseOrderTransitions(id);
+    }
+
+    /**
+     * Department-scoped purchase order processing. Facilities / IT / Equipment teams may
+     * only process purchase orders in their designated categories; central procurement
+     * may process all of them.
+     */
+    @PostMapping("/purchase-orders/{id}/process")
+    public Map<String, Object> process(@PathVariable String id, @RequestBody Map<String, String> body) {
+        String status = body.getOrDefault("status", body.get("toStatus"));
+        return procurement.processPurchaseOrder(id, status,
+                body.getOrDefault("actorId", body.get("processedBy")), body.get("remarks"));
+    }
+
+    @GetMapping("/purchase-orders/{id}/audit-trail")
+    public List<com.eps.procurement.model.AuditLog> poAuditTrail(@PathVariable String id) {
+        return audit.trail(com.eps.procurement.service.AuditService.ENTITY_PURCHASE_ORDER, id);
     }
 
     @GetMapping("/purchase-orders/{id}")
@@ -60,13 +89,4 @@ public class PurchaseOrderController {
         return procurement.uploadInvoice(id, invoiceNumber, invoiceAmount, fileName);
     }
 
-    @GetMapping("/quotations")
-    public List<Quotation> quotations(@RequestParam(required = false) String requestId) {
-        return procurement.quotations(requestId);
-    }
-
-    @PostMapping("/quotations")
-    public ResponseEntity<Quotation> submitQuotation(@RequestBody Quotation payload) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(procurement.submitQuotation(payload));
-    }
 }

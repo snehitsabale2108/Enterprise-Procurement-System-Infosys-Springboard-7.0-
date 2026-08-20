@@ -23,6 +23,14 @@ public class PurchaseOrder {
     public String createdAt;
     public String createdBy;
 
+    // ── Department-scoped processing trail ──
+    public String category;
+    public String ownerTeam;
+    public String processedBy;
+    public String processedByRole;
+    public String processedAt;
+    public String processingRemarks;
+
     public PurchaseOrder() {}
 
     public PurchaseOrder(String id, String requestId, String supplierId, String supplierName,
