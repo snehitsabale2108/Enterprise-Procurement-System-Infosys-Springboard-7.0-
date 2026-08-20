@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { departments } from '../data/mockData';
+import { departments, roles } from '../data/mockData';
 import {
   UserPlus, Mail, Lock, Eye, EyeOff, User, Building2,
-  ArrowLeft, ArrowRight, Cpu, Zap, ShieldCheck, Users
+  ArrowLeft, ArrowRight, Cpu, Zap, ShieldCheck, Users, BadgeCheck
 } from 'lucide-react';
 import './Login.css';
 
 const Register = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', department: '' });
+  const [form, setForm] = useState({ name: '', email: '', password: '', confirmPassword: '', department: '', role: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -27,11 +27,13 @@ const Register = () => {
     if (!form.password) { setError('Please create a password'); return; }
     if (form.password.length < 6) { setError('Password must be at least 6 characters'); return; }
     if (form.password !== form.confirmPassword) { setError('Passwords do not match'); return; }
+    if (!form.role) { setError('Please select the role you are joining as'); return; }
+    if (!form.department) { setError('Please select your department'); return; }
 
     setIsLoading(true);
     try {
       await new Promise(r => setTimeout(r, 800));
-      register(form.name.trim(), form.email.trim(), form.password, form.department);
+      register(form.name.trim(), form.email.trim(), form.password, form.department, form.role);
       navigate('/dashboard');
     } catch (err) {
       setError(err.message);
@@ -130,6 +132,27 @@ const Register = () => {
                     autoComplete="email"
                   />
                 </div>
+              </div>
+
+              <div className="login-field">
+                <label htmlFor="reg-role">Role</label>
+                <div className="login-input-wrapper">
+                  <BadgeCheck size={18} className="login-input-icon" />
+                  <select
+                    id="reg-role"
+                    value={form.role}
+                    onChange={e => updateForm('role', e.target.value)}
+                    style={{ paddingLeft: 44, appearance: 'none', background: 'var(--bg-input)', width: '100%', padding: '13px 16px 13px 44px', fontSize: 'var(--font-base)', fontFamily: 'var(--font-family)', color: form.role ? 'var(--text-primary)' : 'var(--text-muted)', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', outline: 'none', cursor: 'pointer' }}
+                  >
+                    <option value="" disabled>Select the role you are joining as</option>
+                    {roles.filter(r => r.name !== 'admin').map(r => (
+                      <option key={r.id} value={r.name}>{r.displayName}</option>
+                    ))}
+                  </select>
+                </div>
+                <span style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
+                  An administrator can reassign your role later — your dashboard follows the assigned role.
+                </span>
               </div>
 
               <div className="login-field">

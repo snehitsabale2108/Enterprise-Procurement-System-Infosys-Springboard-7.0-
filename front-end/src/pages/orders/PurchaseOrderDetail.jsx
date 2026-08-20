@@ -1,11 +1,18 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { purchaseOrders, formatCurrency, formatDate, getStatusBadgeClass, getStatusLabel } from '../../data/mockData';
 import { ArrowLeft } from 'lucide-react';
+import { formatCurrency, formatDate, getStatusBadgeClass, getStatusLabel } from '../../data/mockData';
+import { useAuth } from '../../contexts/AuthContext';
+import { useEpsStore, getPurchaseOrder, getAuditTrail } from '../../store/epsStore';
+import PoProcessPanel from '../../components/PoProcessPanel';
+import AuditTrail from '../../components/AuditTrail';
 
 const PurchaseOrderDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const po = purchaseOrders.find(p => p.id === id);
+  const { currentUser } = useAuth();
+  useEpsStore();
+
+  const po = getPurchaseOrder(id);
   if (!po) return <div className="page"><div className="empty-state"><h3>PO not found</h3></div></div>;
 
   return (
@@ -36,7 +43,12 @@ const PurchaseOrderDetail = () => {
           </div>
         </div>
       </div>
-      <div className="card">
+
+      <div style={{ marginBottom: 'var(--space-xl)' }}>
+        <PoProcessPanel po={po} user={currentUser} />
+      </div>
+
+      <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
         <div className="card-title" style={{ marginBottom: 'var(--space-md)' }}>Line Items</div>
         <div className="table-container" style={{ border: 'none' }}>
           <table>
@@ -49,6 +61,8 @@ const PurchaseOrderDetail = () => {
           </table>
         </div>
       </div>
+
+      <AuditTrail entries={getAuditTrail(po.id)} title={`Audit Trail — ${po.id}`} />
     </div>
   );
 };

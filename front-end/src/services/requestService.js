@@ -1,6 +1,16 @@
 import { apiCall, isMockMode } from './apiConfig';
 import { requests as mockRequests, approvalHistory as mockHistory } from '../data/mockData';
-import { persist } from '../data/mockPersistence';
+import {
+  createRequest as storeCreate,
+  updateRequest as storeUpdate,
+  submitRequest as storeSubmit,
+  cancelRequest as storeCancel,
+} from '../store/epsStore';
+import { users as mockUsers } from '../data/mockData';
+
+/** Resolves the acting user for mock-mode workflow calls. */
+const resolveUser = (actor, userId) =>
+  (typeof actor === 'object' && actor) || mockUsers.find(u => u.id === userId) || { id: userId };
 
 // ============================================
 // Request Service
@@ -89,25 +99,17 @@ export const getRequestById = async (id) => {
  * 
  * Response (201): Created request object with generated ID
  */
-export const createRequest = async (data) => {
-  // ── Real API call ──
-  // return apiCall('/requests', {
-  //   method: 'POST',
-  //   body: JSON.stringify(data),
-  // });
-
-  // ── Mock ──
-  if (isMockMode()) {
-    const newRequest = {
-      ...data,
-      id: `REQ-2024-${String(mockRequests.length + 1).padStart(3, '0')}`,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    mockRequests.push(newRequest);
-    persist('requests', mockRequests);
-    return newRequest;
+export const createRequest = async (data, actor) => {
+  if (!isMockMode()) {
+    return apiCall('/requests', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
+
+  return storeCreate(data, resolveUser(actor, data.createdBy), {
+    submit: data.status && data.status !== 'draft',
+  });
 };
 
 /**
@@ -115,59 +117,44 @@ export const createRequest = async (data) => {
  * Request Body: Same as POST /requests (full update)
  * Response (200): Updated request object
  */
-export const updateRequest = async (id, data) => {
-  // ── Real API call ──
-  // return apiCall(`/requests/${id}`, {
-  //   method: 'PUT',
-  //   body: JSON.stringify(data),
-  // });
-
-  // ── Mock ──
-  if (isMockMode()) {
-    const index = mockRequests.findIndex(r => r.id === id);
-    if (index === -1) throw new Error('Request not found');
-    mockRequests[index] = { ...mockRequests[index], ...data, updatedAt: new Date().toISOString() };
-    persist('requests', mockRequests);
-    return mockRequests[index];
+export const updateRequest = async (id, data, actor) => {
+  if (!isMockMode()) {
+    return apiCall(`/requests/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
   }
+
+  // Only draft and returned requests are editable — enforced by the store.
+  return storeUpdate(id, data, resolveUser(actor, data?.createdBy));
 };
 
 /**
  * PATCH /requests/:id/submit
  * Response (200): { "message": "Request submitted", "status": "pending_manager" }
  */
-export const submitRequest = async (id) => {
-  // ── Real API call ──
-  // return apiCall(`/requests/${id}/submit`, { method: 'PATCH' });
-
-  // ── Mock ──
-  if (isMockMode()) {
-    const request = mockRequests.find(r => r.id === id);
-    if (request) {
-      request.status = 'pending_manager';
-      request.updatedAt = new Date().toISOString();
-      persist('requests', mockRequests);
-    }
-    return { message: 'Request submitted', status: 'pending_manager' };
+export const submitRequest = async (id, actor) => {
+  if (!isMockMode()) {
+    return apiCall(`/requests/${id}/submit`, { method: 'PATCH' });
   }
+
+  const request = mockRequests.find(r => r.id === id);
+  const updated = storeSubmit(id, resolveUser(actor, request?.createdBy));
+  return { message: 'Request submitted', status: updated.status };
 };
 
 /**
  * PATCH /requests/:id/cancel
  * Response (200): { "message": "Request cancelled" }
  */
-export const cancelRequest = async (id) => {
-  // ── Real API call ──
-  // return apiCall(`/requests/${id}/cancel`, { method: 'PATCH' });
+export const cancelRequest = async (id, actor) => {
+  if (!isMockMode()) {
+    return apiCall(`/requests/${id}/cancel`, { method: 'PATCH' });
+  }
 
-  // ── Mock ──
   if (isMockMode()) {
     const request = mockRequests.find(r => r.id === id);
-    if (request) {
-      request.status = 'cancelled';
-      request.updatedAt = new Date().toISOString();
-      persist('requests', mockRequests);
-    }
+    storeCancel(id, resolveUser(actor, request?.createdBy));
     return { message: 'Request cancelled' };
   }
 };

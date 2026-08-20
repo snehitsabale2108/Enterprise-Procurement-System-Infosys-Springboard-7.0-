@@ -1,55 +1,90 @@
-import { isMockMode } from './apiConfig';
-import { notifications as mockNotifications } from '../data/mockData';
+import { apiCall, isMockMode, API_BASE_URL } from './apiConfig';
+import {
+  getUserNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  subscribeNotifications as subscribeMockNotifications,
+} from '../store/epsStore';
 
 // ============================================
-// Notification Service
+// Notification Service (live)
 // ============================================
 
 /**
  * GET /notifications?userId=string
- * 
- * Response (200):
- * [
- *   {
- *     "id": "string",
- *     "userId": "string",
- *     "type": "string",       // "request_approved"|"request_rejected"|"pending_approval"|"po_created"|"delivery_completed"|"invoice_pending"|"payment_completed"
- *     "title": "string",
- *     "message": "string",
- *     "read": "boolean",
- *     "createdAt": "string",
- *     "link": "string"        // frontend route to navigate to
- *   }
- * ]
  */
 export const getNotifications = async (userId) => {
-  // return apiCall(`/notifications?userId=${userId}`);
-  if (isMockMode()) {
-    return mockNotifications.filter(n => n.userId === userId);
+  if (!isMockMode()) {
+    return apiCall(`/notifications?userId=${userId}`);
   }
+  return getUserNotifications(userId);
 };
 
-/**
- * PATCH /notifications/:id/read
- * Response (200): { "message": "Notification marked as read" }
- */
+/** PATCH /notifications/:id/read */
 export const markAsRead = async (id) => {
-  // return apiCall(`/notifications/${id}/read`, { method: 'PATCH' });
-  if (isMockMode()) {
-    const n = mockNotifications.find(n => n.id === id);
-    if (n) n.read = true;
-    return { message: 'Marked as read' };
+  if (!isMockMode()) {
+    return apiCall(`/notifications/${id}/read`, { method: 'PATCH' });
   }
+  markNotificationRead(id);
+  return { message: 'Marked as read' };
+};
+
+/** PATCH /notifications/read-all?userId=string */
+export const markAllAsRead = async (userId) => {
+  if (!isMockMode()) {
+    return apiCall(`/notifications/read-all?userId=${userId}`, { method: 'PATCH' });
+  }
+  markAllNotificationsRead(userId);
+  return { message: 'All notifications marked as read' };
 };
 
 /**
- * PATCH /notifications/read-all?userId=string
- * Response (200): { "message": "All notifications marked as read" }
+ * Live notification stream.
+ *
+ * Mock mode  -> in-app event bus (store).
+ * API mode   -> Server-Sent Events from GET /notifications/stream?userId=...
+ *
+ * Returns an unsubscribe function; always call it on unmount.
  */
-export const markAllAsRead = async (userId) => {
-  // return apiCall(`/notifications/read-all?userId=${userId}`, { method: 'PATCH' });
+export const subscribeToNotifications = (userId, onNotification) => {
+  if (!userId || typeof onNotification !== 'function') return () => {};
+
   if (isMockMode()) {
-    mockNotifications.filter(n => n.userId === userId).forEach(n => n.read = true);
-    return { message: 'All marked as read' };
+    return subscribeMockNotifications((notification) => {
+      if (notification.userId === userId) onNotification(notification);
+    });
   }
+
+  let source;
+  let closed = false;
+  let retry;
+
+  const connect = () => {
+    if (closed) return;
+    source = new EventSource(
+      `${API_BASE_URL}/notifications/stream?userId=${encodeURIComponent(userId)}`,
+      { withCredentials: true },
+    );
+
+    source.addEventListener('notification', (event) => {
+      try {
+        onNotification(JSON.parse(event.data));
+      } catch (err) {
+        console.error('Bad notification payload', err);
+      }
+    });
+
+    source.onerror = () => {
+      source.close();
+      if (!closed) retry = setTimeout(connect, 5000); // auto-reconnect
+    };
+  };
+
+  connect();
+
+  return () => {
+    closed = true;
+    clearTimeout(retry);
+    source?.close();
+  };
 };

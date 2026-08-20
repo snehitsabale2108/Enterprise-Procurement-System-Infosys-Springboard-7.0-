@@ -1,23 +1,16 @@
 import { apiCall, isMockMode } from './apiConfig';
 import { approvalHistory as mockHistory, requests as mockRequests, users as mockUsers } from '../data/mockData';
-import { persist } from '../data/mockPersistence';
+import {
+  approveRequest as storeApprove,
+  rejectRequest as storeReject,
+  returnRequest as storeReturn,
+} from '../store/epsStore';
 
-const addHistoryRecord = (requestId, approverRole, action, comments) => {
-  const role = (approverRole || 'manager').replace('-', '_');
-  const approver = mockUsers.find(u => u.role === role);
-  const record = {
-    id: `AH${String(mockHistory.length + 1).padStart(3, '0')}`,
-    requestId,
-    approverName: approver?.name || 'System Approver',
-    approverRole: role,
-    action,
-    comments: comments || '',
-    timestamp: new Date().toISOString(),
-  };
-  mockHistory.push(record);
-  persist('approvalHistory', mockHistory);
-  return record;
-};
+/** Resolves the acting approver: an explicit user, or the first active holder of the role. */
+const resolveActor = (actor, role) =>
+  (typeof actor === 'object' && actor)
+    || mockUsers.find(u => u.role === role && u.status === 'active')
+    || { name: 'Approver', role };
 
 // ============================================
 // Approval Service
@@ -88,29 +81,16 @@ export const getPendingApprovals = async (role) => {
  *   }
  * }
  */
-export const approveRequest = async (requestId, comments, approverRole) => {
-  // ── Real API call ──
-  // return apiCall(`/approvals/${requestId}/approve`, {
-  //   method: 'POST',
-  //   body: JSON.stringify({ comments, approverRole }),
-  // });
-
-  // ── Mock ──
-  if (isMockMode()) {
-    const request = mockRequests.find(r => r.id === requestId);
-    if (!request) throw new Error('Request not found');
-    
-    const nextStatus = {
-      pending_manager: request.estimatedCost > 50000 ? 'pending_senior_manager' : 'approved',
-      pending_senior_manager: request.estimatedCost > 200000 ? 'pending_head' : 'approved',
-      pending_head: 'approved',
-    };
-    request.status = nextStatus[request.status] || 'approved';
-    request.updatedAt = new Date().toISOString();
-    const record = addHistoryRecord(requestId, approverRole, 'approved', comments);
-    persist('requests', mockRequests);
-    return { message: 'Request approved', newStatus: request.status, approvalRecord: record };
+export const approveRequest = async (requestId, comments, approverRole, actor) => {
+  if (!isMockMode()) {
+    return apiCall(`/approvals/${requestId}/approve`, {
+      method: 'POST',
+      body: JSON.stringify({ comments, approverRole }),
+    });
   }
+
+  const request = storeApprove(requestId, resolveActor(actor, approverRole), comments);
+  return { message: 'Request approved', newStatus: request.status };
 };
 
 /**
@@ -128,25 +108,16 @@ export const approveRequest = async (requestId, comments, approverRole) => {
  *   "newStatus": "rejected"
  * }
  */
-export const rejectRequest = async (requestId, comments, approverRole) => {
-  // ── Real API call ──
-  // return apiCall(`/approvals/${requestId}/reject`, {
-  //   method: 'POST',
-  //   body: JSON.stringify({ comments, approverRole }),
-  // });
-
-  // ── Mock ──
-  if (isMockMode()) {
-    const request = mockRequests.find(r => r.id === requestId);
-    let record = null;
-    if (request) {
-      request.status = 'rejected';
-      request.updatedAt = new Date().toISOString();
-      record = addHistoryRecord(requestId, approverRole, 'rejected', comments);
-      persist('requests', mockRequests);
-    }
-    return { message: 'Request rejected', newStatus: 'rejected', approvalRecord: record };
+export const rejectRequest = async (requestId, comments, approverRole, actor) => {
+  if (!isMockMode()) {
+    return apiCall(`/approvals/${requestId}/reject`, {
+      method: 'POST',
+      body: JSON.stringify({ comments, approverRole }),
+    });
   }
+
+  storeReject(requestId, resolveActor(actor, approverRole), comments);
+  return { message: 'Request rejected', newStatus: 'rejected' };
 };
 
 /**
@@ -161,26 +132,18 @@ export const rejectRequest = async (requestId, comments, approverRole) => {
  * Response (200):
  * {
  *   "message": "Request returned for correction",
- *   "newStatus": "draft"
+ *   "newStatus": "returned"   // editable again by the requester
  * }
  */
-export const returnRequest = async (requestId, comments, approverRole) => {
-  // ── Real API call ──
-  // return apiCall(`/approvals/${requestId}/return`, {
-  //   method: 'POST',
-  //   body: JSON.stringify({ comments, approverRole }),
-  // });
-
-  // ── Mock ──
-  if (isMockMode()) {
-    const request = mockRequests.find(r => r.id === requestId);
-    let record = null;
-    if (request) {
-      request.status = 'draft';
-      request.updatedAt = new Date().toISOString();
-      record = addHistoryRecord(requestId, approverRole, 'returned', comments);
-      persist('requests', mockRequests);
-    }
-    return { message: 'Request returned for correction', newStatus: 'draft', approvalRecord: record };
+export const returnRequest = async (requestId, comments, approverRole, actor) => {
+  if (!isMockMode()) {
+    return apiCall(`/approvals/${requestId}/return`, {
+      method: 'POST',
+      body: JSON.stringify({ comments, approverRole }),
+    });
   }
+
+  // Returned requests become editable drafts again for the requester.
+  storeReturn(requestId, resolveActor(actor, approverRole), comments);
+  return { message: 'Request returned for correction', newStatus: 'returned' };
 };

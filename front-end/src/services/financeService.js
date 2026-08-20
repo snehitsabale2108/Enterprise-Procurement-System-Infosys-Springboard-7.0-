@@ -1,97 +1,109 @@
 import { apiCall, isMockMode } from './apiConfig';
-import { payments as mockPayments } from '../data/mockData';
+import {
+  getPayments as storeGetPayments,
+  getPayment as storeGetPayment,
+  getPaymentSummary,
+  verifyInvoice as storeVerifyInvoice,
+  releasePayment as storeReleasePayment,
+  confirmPayment as storeConfirmPayment,
+  updatePaymentStatus as storeUpdatePaymentStatus,
+} from '../store/epsStore';
 
 // ============================================
 // Finance Service
 // ============================================
+// In mock mode every call is delegated to the client store so the whole
+// app (dashboards, notification bell, audit trail) stays in sync. With a
+// backend URL configured the same calls hit Spring Boot.
 
 /**
- * GET /payments
- * Query: ?status=string&page=number&size=number
- * 
- * Response (200):
- * {
- *   "content": [
- *     {
- *       "id": "string",              // e.g. "PAY-2024-001"
- *       "poNumber": "string",
- *       "supplierName": "string",
- *       "amount": "number",          // INR
- *       "paymentMethod": "string",   // "NEFT"|"RTGS"|"IMPS"|"Cheque"
- *       "referenceNumber": "string",
- *       "status": "string",          // "pending"|"approved"|"processing"|"paid"|"failed"
- *       "paidDate": "string|null",
- *       "verifiedBy": "string|null",
- *       "transactionId": "string|null"
- *     }
- *   ],
- *   "totalElements": "number"
- * }
+ * GET /payments?status=&search=
+ * Response (200): { content: Payment[], totalElements: number }
  */
 export const getPayments = async (filters = {}) => {
-  // return apiCall(`/payments?${new URLSearchParams(filters)}`);
   if (isMockMode()) {
-    let filtered = [...mockPayments];
-    if (filters.status) filtered = filtered.filter(p => p.status === filters.status);
-    return { content: filtered, totalElements: filtered.length };
+    const content = storeGetPayments(filters);
+    return { content, totalElements: content.length };
   }
+  return apiCall(`/payments?${new URLSearchParams(filters)}`);
+};
+
+/** GET /payments/{id} */
+export const getPayment = async (id) => {
+  if (isMockMode()) return storeGetPayment(id);
+  return apiCall(`/payments/${id}`);
+};
+
+/** GET /payments/summary */
+export const getPaymentsSummary = async () => {
+  if (isMockMode()) return getPaymentSummary();
+  return apiCall('/payments/summary');
 };
 
 /**
- * POST /payments/verify
- * 
- * Request Body:
- * {
- *   "paymentId": "string",
- *   "poVerified": "boolean",
- *   "grnVerified": "boolean",
- *   "invoiceVerified": "boolean",
- *   "taxVerified": "boolean",
- *   "amountVerified": "boolean",
- *   "remarks": "string"
- * }
- * 
- * Response (200): { "message": "Invoice verified", "status": "approved" }
+ * POST /payments/verify — three-way match (PO + GRN + invoice + tax + amount).
+ * Body: { paymentId, poVerified, grnVerified, invoiceVerified, taxVerified, amountVerified, remarks, actorId }
  */
-export const verifyInvoice = async (data) => {
-  // return apiCall('/payments/verify', { method: 'POST', body: JSON.stringify(data) });
+export const verifyInvoice = async ({ paymentId, remarks, user, ...checks }) => {
   if (isMockMode()) {
-    const payment = mockPayments.find(p => p.id === data.paymentId);
-    if (payment) payment.status = 'approved';
-    return { message: 'Invoice verified', status: 'approved' };
+    const payment = storeVerifyInvoice(paymentId, { checks, remarks, user });
+    return { message: 'Invoice verified', status: payment.status, payment };
   }
+  return apiCall('/payments/verify', {
+    method: 'POST',
+    body: JSON.stringify({ paymentId, remarks, actorId: user?.id, ...checks }),
+  });
 };
 
 /**
- * POST /payments/process
- * 
- * Request Body:
- * {
- *   "paymentId": "string",
- *   "paymentMethod": "string",     // "NEFT"|"RTGS"|"IMPS"|"Cheque"
- *   "referenceNumber": "string",
- *   "remarks": "string"
- * }
- * 
- * Response (200):
- * {
- *   "message": "Payment processed",
- *   "transactionId": "string",
- *   "paidDate": "string",
- *   "status": "paid"
- * }
+ * POST /payments/{id}/release — release funds to the supplier bank account.
+ * Body: { paymentMethod, referenceNumber, remarks, actorId }
  */
-export const processPayment = async (data) => {
-  // return apiCall('/payments/process', { method: 'POST', body: JSON.stringify(data) });
+export const releasePayment = async ({ paymentId, paymentMethod, referenceNumber, remarks, user }) => {
   if (isMockMode()) {
-    const payment = mockPayments.find(p => p.id === data.paymentId);
-    if (payment) {
-      payment.status = 'paid';
-      payment.paidDate = new Date().toISOString().split('T')[0];
-      payment.transactionId = `TXN-${Date.now()}`;
-      payment.paymentMethod = data.paymentMethod;
-      payment.referenceNumber = data.referenceNumber;
-    }
-    return { message: 'Payment processed', transactionId: payment?.transactionId, status: 'paid' };
+    const payment = storeReleasePayment(paymentId, { paymentMethod, referenceNumber, remarks, user });
+    return { message: 'Payment released', status: payment.status, payment };
   }
+  return apiCall(`/payments/${paymentId}/release`, {
+    method: 'POST',
+    body: JSON.stringify({ paymentMethod, referenceNumber, remarks, actorId: user?.id }),
+  });
+};
+
+/**
+ * POST /payments/{id}/confirm — confirm bank settlement.
+ * Body: { transactionId, remarks, actorId }
+ */
+export const confirmPayment = async ({ paymentId, transactionId, remarks, user }) => {
+  if (isMockMode()) {
+    const payment = storeConfirmPayment(paymentId, { transactionId, remarks, user });
+    return { message: 'Payment completed', status: payment.status, payment };
+  }
+  return apiCall(`/payments/${paymentId}/confirm`, {
+    method: 'POST',
+    body: JSON.stringify({ transactionId, remarks, actorId: user?.id }),
+  });
+};
+
+/**
+ * POST /payments/{id}/status — hold, fail or reopen a payment.
+ * Body: { status, remarks, actorId }
+ */
+export const updatePaymentStatus = async ({ paymentId, status, remarks, user }) => {
+  if (isMockMode()) {
+    const payment = storeUpdatePaymentStatus(paymentId, status, { remarks, user });
+    return { message: `Payment ${status}`, status: payment.status, payment };
+  }
+  return apiCall(`/payments/${paymentId}/status`, {
+    method: 'POST',
+    body: JSON.stringify({ status, remarks, actorId: user?.id }),
+  });
+};
+
+/**
+ * Legacy helper kept for compatibility: verify + release + confirm in one call.
+ */
+export const processPayment = async ({ paymentId, paymentMethod, referenceNumber, remarks, user }) => {
+  await releasePayment({ paymentId, paymentMethod, referenceNumber, remarks, user });
+  return confirmPayment({ paymentId, remarks, user });
 };
