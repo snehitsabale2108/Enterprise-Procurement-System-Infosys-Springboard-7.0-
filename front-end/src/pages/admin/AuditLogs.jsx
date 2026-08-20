@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { auditLogs, formatDateTime } from '../../data/mockData';
+import { useEpsStore } from '../../store/epsStore';
 import { Search, ChevronDown, ChevronUp, History } from 'lucide-react';
 
 const actionColors = {
@@ -9,6 +10,7 @@ const actionColors = {
 };
 
 const AuditLogs = () => {
+  useEpsStore();
   const [search, setSearch] = useState('');
   const [actionFilter, setActionFilter] = useState('');
   const [entityFilter, setEntityFilter] = useState('');
@@ -17,7 +19,7 @@ const AuditLogs = () => {
   const uniqueActions = [...new Set(auditLogs.map(l => l.action))].sort();
   const uniqueEntities = [...new Set(auditLogs.map(l => l.entity))].sort();
 
-  const filtered = auditLogs.filter(l => {
+  const filtered = [...auditLogs].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).filter(l => {
     if (search && !l.userName.toLowerCase().includes(search.toLowerCase()) && !l.entityId.toLowerCase().includes(search.toLowerCase()) && !l.remarks.toLowerCase().includes(search.toLowerCase())) return false;
     if (actionFilter && l.action !== actionFilter) return false;
     if (entityFilter && l.entity !== entityFilter) return false;

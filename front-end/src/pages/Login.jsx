@@ -1,22 +1,20 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { users, roles } from '../data/mockData';
 import {
-  LogIn, Mail, Lock, Eye, EyeOff, Cpu, ChevronRight,
-  ShieldCheck, ArrowRight, Zap, Users, ChevronDown, ChevronUp
+  LogIn, Mail, Lock, Eye, EyeOff, Cpu,
+  ShieldCheck, ArrowRight, Zap, Users
 } from 'lucide-react';
 import './Login.css';
 
 const Login = () => {
-  const { loginWithCredentials, login } = useAuth();
+  const { loginWithCredentials } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [showQuickAccess, setShowQuickAccess] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -35,37 +33,9 @@ const Login = () => {
     }
   };
 
-  const handleQuickLogin = (userId) => {
-    setError('');
-    try {
-      login(userId);
-      navigate('/dashboard');
-    } catch (err) {
-      setError(err.message);
-    }
-  };
 
-  const getRoleDisplay = (role) => {
-    const r = roles.find(rl => rl.name === role);
-    return r ? r.displayName : role;
-  };
 
-  const getRoleColor = (role) => {
-    const colors = {
-      employee: '#6366f1', manager: '#06b6d4', senior_manager: '#f59e0b',
-      head: '#10b981', procurement_officer: '#8b5cf6', equipment_team: '#14b8a6',
-      software_team: '#ec4899', facilities_team: '#f97316', finance_officer: '#34d399',
-      admin: '#ef4444',
-    };
-    return colors[role] || '#6366f1';
-  };
 
-  // Pre-fill with a user for convenience
-  const fillDemo = (user) => {
-    setEmail(user.email);
-    setPassword('password123');
-    setError('');
-  };
 
   return (
     <div className="login-page">
@@ -201,49 +171,6 @@ const Login = () => {
               <Link to="/register">Create an account</Link>
             </div>
 
-            {/* Quick Access / Dev Mode */}
-            <div className="login-quick-access">
-              <button
-                type="button"
-                className="login-quick-toggle"
-                onClick={() => setShowQuickAccess(!showQuickAccess)}
-              >
-                <Zap size={14} />
-                Quick Access (Demo Mode)
-                {showQuickAccess ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-              </button>
-
-              {showQuickAccess && (
-                <div className="login-quick-grid">
-                  {users.map(user => (
-                    <button
-                      key={user.id}
-                      className="login-quick-card"
-                      onClick={() => handleQuickLogin(user.id)}
-                      style={{ '--user-color': getRoleColor(user.role) }}
-                    >
-                      <div className="login-quick-avatar" style={{ background: user.avatar || getRoleColor(user.role) }}>
-                        {user.name.split(' ').map(n => n[0]).join('')}
-                      </div>
-                      <div className="login-quick-info">
-                        <span className="login-quick-name">{user.name}</span>
-                        <span className="login-quick-role" style={{ color: getRoleColor(user.role) }}>
-                          {getRoleDisplay(user.role)}
-                        </span>
-                      </div>
-                      <ChevronRight size={14} className="login-quick-arrow" />
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Demo hint */}
-            <div className="login-demo-hint">
-              <p>
-                <strong>Demo:</strong> Use any listed email (e.g. <button type="button" className="login-demo-email" onClick={() => fillDemo(users[0])}>{users[0].email}</button>) with any password.
-              </p>
-            </div>
           </div>
         </div>
       </div>

@@ -1,56 +1,42 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
-import { users, formatCurrency, getStatusLabel } from '../../data/mockData';
-import { getPendingApprovals, approveRequest, rejectRequest, returnRequest } from '../../services/approvalService';
+import { users, formatCurrency, formatDate } from '../../data/mockData';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle, XCircle, RotateCcw, MessageSquare } from 'lucide-react';
+import {
+  useEpsStore, approveRequest, rejectRequest, returnRequest, statusForLevel,
+  approvalLevelsFor,
+} from '../../store/epsStore';
+import { requests } from '../../data/mockData';
+import { CheckCircle, XCircle, RotateCcw } from 'lucide-react';
 
 const ApprovalQueue = () => {
   const { currentUser } = useAuth();
   const navigate = useNavigate();
+  useEpsStore();
+
   const [showModal, setShowModal] = useState(null);
   const [comments, setComments] = useState('');
   const [action, setAction] = useState('');
-  const [pendingRequests, setPendingRequests] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
 
-  const loadPending = async () => {
-    setLoading(true);
-    const result = await getPendingApprovals(currentUser?.role);
-    setPendingRequests(result?.content || []);
-    setLoading(false);
-  };
-
-  useEffect(() => {
-    loadPending();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentUser?.role]);
+  const pendingStatus = statusForLevel(currentUser?.role);
+  const pendingRequests = requests.filter((r) => r.status === pendingStatus);
 
   const handleAction = (requestId, act) => {
     setShowModal(requestId);
     setAction(act);
     setComments('');
+    setError('');
   };
 
-  const confirmAction = async () => {
-    if (!showModal) return;
-    setSubmitting(true);
+  const confirmAction = () => {
     try {
-      if (action === 'approve') {
-        await approveRequest(showModal, comments, currentUser?.role);
-      } else if (action === 'reject') {
-        await rejectRequest(showModal, comments, currentUser?.role);
-      } else {
-        await returnRequest(showModal, comments, currentUser?.role);
-      }
-      alert(`Request ${action === 'approve' ? 'approved' : action === 'reject' ? 'rejected' : 'returned'} successfully!`);
+      if (action === 'approve') approveRequest(showModal, currentUser, comments || 'Approved.');
+      else if (action === 'reject') rejectRequest(showModal, currentUser, comments);
+      else returnRequest(showModal, currentUser, comments);
       setShowModal(null);
-      await loadPending();
     } catch (err) {
-      alert(err.message || 'Action failed. Please try again.');
-    } finally {
-      setSubmitting(false);
+      setError(err.message);
     }
   };
 
@@ -61,24 +47,25 @@ const ApprovalQueue = () => {
         <p>{pendingRequests.length} request(s) pending your approval</p>
       </div>
 
-      {loading ? (
-        <div className="card"><div className="empty-state"><p>Loading...</p></div></div>
-      ) : pendingRequests.length === 0 ? (
+      {pendingRequests.length === 0 ? (
         <div className="card"><div className="empty-state"><CheckCircle size={48} /><h3>All caught up!</h3><p>No requests pending your approval</p></div></div>
       ) : (
         <div style={{ display: 'grid', gap: 'var(--space-md)' }}>
-          {pendingRequests.map(r => {
-            const creator = users.find(u => u.id === r.createdBy);
+          {pendingRequests.map((r) => {
+            const creator = users.find((u) => u.id === r.createdBy);
+            const levels = approvalLevelsFor(r.estimatedCost);
+            const step = levels.indexOf(currentUser?.role) + 1;
             return (
               <div key={r.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 'var(--space-md)' }}>
                 <div style={{ flex: 1, minWidth: 200, cursor: 'pointer' }} onClick={() => navigate(`/requests/${r.id}`)}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)', marginBottom: 4 }}>
                     <span style={{ color: 'var(--primary-light)', fontWeight: 600, fontSize: 'var(--font-sm)' }}>{r.id}</span>
                     <span className={`badge ${r.priority === 'high' ? 'badge-danger' : r.priority === 'medium' ? 'badge-warning' : 'badge-neutral'}`}>{r.priority}</span>
+                    <span className="badge badge-info">Level {step} of {levels.length}</span>
                   </div>
                   <h3 style={{ fontSize: 'var(--font-md)', fontWeight: 600, marginBottom: 4 }}>{r.title}</h3>
                   <p style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)' }}>
-                    by {creator?.name || 'Unknown'} • {r.category} • {formatCurrency(r.estimatedCost)}
+                    by {creator?.name || 'Unknown'} • {r.category} • {formatCurrency(r.estimatedCost)} • needed by {formatDate(r.requiredDate)}
                   </p>
                 </div>
                 <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
@@ -94,17 +81,27 @@ const ApprovalQueue = () => {
 
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(null)}>
-          <div className="modal" onClick={e => e.stopPropagation()}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>
             <div className="modal-header">
               <h3 className="modal-title">{action === 'approve' ? 'Approve' : action === 'reject' ? 'Reject' : 'Return'} Request</h3>
             </div>
+            {action === 'return' && (
+              <p style={{ color: 'var(--text-secondary)', marginBottom: 'var(--space-md)' }}>
+                The requester will be notified and can edit and resubmit this request.
+              </p>
+            )}
             <div className="form-group">
               <label className="form-label">Comments {action !== 'approve' ? '*' : '(optional)'}</label>
-              <textarea className="form-textarea" placeholder={`Add ${action} comments...`} value={comments} onChange={e => setComments(e.target.value)} />
+              <textarea className="form-textarea" placeholder={`Add ${action} comments...`} value={comments} onChange={(e) => setComments(e.target.value)} />
             </div>
+            {error && <p style={{ color: 'var(--danger)', fontSize: 'var(--font-sm)' }}>{error}</p>}
             <div className="modal-footer">
-              <button className="btn btn-secondary" disabled={submitting} onClick={() => setShowModal(null)}>Cancel</button>
-              <button className={`btn ${action === 'approve' ? 'btn-success' : action === 'reject' ? 'btn-danger' : 'btn-warning'}`} disabled={submitting} onClick={confirmAction}>
+              <button className="btn btn-secondary" onClick={() => setShowModal(null)}>Cancel</button>
+              <button
+                className={`btn ${action === 'approve' ? 'btn-success' : action === 'reject' ? 'btn-danger' : 'btn-warning'}`}
+                onClick={confirmAction}
+                disabled={action !== 'approve' && !comments.trim()}
+              >
                 Confirm {action.charAt(0).toUpperCase() + action.slice(1)}
               </button>
             </div>

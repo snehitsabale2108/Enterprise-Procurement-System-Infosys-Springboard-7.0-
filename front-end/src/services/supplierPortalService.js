@@ -1,9 +1,18 @@
 import { apiCall, isMockMode } from './apiConfig';
 import { rfqs as mockRfqs, quotations as mockQuotations, purchaseOrders as mockPos, suppliers as mockSuppliers } from '../data/mockData';
+import { submitQuotation as storeSubmitQuotation } from '../store/epsStore';
 
 /**
  * GET /suppliers/portal/dashboard/:supplierId
  */
+/**
+ * Purchase orders a supplier may see: only orders the procurement officer has
+ * actually issued after finance approval (draft / finance stages stay internal).
+ */
+const INTERNAL_PO_STATUSES = ['draft', 'pending_finance', 'finance_approved', 'finance_rejected'];
+const supplierVisiblePos = (supplierId) =>
+  mockPos.filter((po) => po.supplierId === supplierId && !INTERNAL_PO_STATUSES.includes(po.status));
+
 export const getSupplierPortalStats = async (supplierId) => {
   if (!isMockMode()) {
     return apiCall(`/suppliers/portal/dashboard/${supplierId}`);
@@ -11,7 +20,7 @@ export const getSupplierPortalStats = async (supplierId) => {
 
   const myRfqs = mockRfqs.filter(r => r.supplierId === supplierId);
   const myQuotations = mockQuotations.filter(q => q.supplierId === supplierId);
-  const myPos = mockPos.filter(po => po.supplierId === supplierId);
+  const myPos = supplierVisiblePos(supplierId);
 
   return {
     pendingRfqs: myRfqs.filter(r => r.status === 'pending').length,
@@ -90,21 +99,9 @@ export const submitQuotation = async (quotationData) => {
     });
   }
 
-  const newQ = {
-    id: `Q${String(mockQuotations.length + 1).padStart(3, '0')}`,
-    status: 'pending',
-    submittedAt: new Date().toISOString().split('T')[0],
-    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-    ...quotationData,
-  };
-  mockQuotations.push(newQ);
-
-  if (quotationData.rfqId) {
-    const rfq = mockRfqs.find(r => r.id === quotationData.rfqId);
-    if (rfq) rfq.status = 'quoted';
-  }
-
-  return newQ;
+  // The store applies the workflow: quotation goes to finance for approval,
+  // finance + procurement are notified, and the RFQ is marked as quoted.
+  return storeSubmitQuotation(quotationData);
 };
 
 /**
@@ -130,7 +127,7 @@ export const getSupplierPurchaseOrders = async (supplierId, statusFilter = '') =
     return apiCall(`/purchase-orders?supplierId=${supplierId}&status=${statusFilter}`);
   }
 
-  let list = mockPos.filter(po => po.supplierId === supplierId);
+  let list = supplierVisiblePos(supplierId);
   if (statusFilter) {
     list = list.filter(po => po.status === statusFilter);
   }

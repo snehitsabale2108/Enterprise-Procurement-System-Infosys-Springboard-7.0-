@@ -1,5 +1,6 @@
 import { isMockMode } from './apiConfig';
 import { auditLogs as mockLogs } from '../data/mockData';
+import { getAuditTrail, getRequestAuditTrail, recordAudit } from '../store/epsStore';
 
 // ============================================
 // Audit Service
@@ -41,5 +42,26 @@ export const getAuditLogs = async (filters = {}) => {
     if (filters.entity) filtered = filtered.filter(l => l.entity === filters.entity);
     if (filters.userId) filtered = filtered.filter(l => l.userId === filters.userId);
     return { content: filtered, totalElements: filtered.length, totalPages: 1 };
+  }
+};
+
+/** GET /audit-logs/entity/:entityId — append-only trail for one entity. */
+export const getEntityAuditTrail = async (entityId) => {
+  if (isMockMode()) {
+    return { content: getAuditTrail(entityId) };
+  }
+};
+
+/** GET /audit-logs/request/:requestId — request plus its RFQs, quotes and PO. */
+export const getRequestTrail = async (requestId) => {
+  if (isMockMode()) {
+    return { content: getRequestAuditTrail(requestId) };
+  }
+};
+
+/** POST /audit-logs — record an audit entry (mock mode writes to the store). */
+export const createAuditEntry = async (entry) => {
+  if (isMockMode()) {
+    return recordAudit(entry);
   }
 };
