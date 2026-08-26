@@ -1,0 +1,211 @@
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../../contexts/AuthContext';
+import { requests, suppliers, tenders, formatCurrency } from '../../data/mockData';
+import { ArrowLeft, Plus, Calendar, FileText, Building2, Check } from 'lucide-react';
+
+const CreateTender = () => {
+  const navigate = useNavigate();
+  const { currentUser } = useAuth();
+
+  // Only approved requests that don't already have a tender
+  const existingTenderRequestIds = tenders.map(t => t.requestId);
+  const eligibleRequests = requests.filter(r => r.status === 'approved' && !existingTenderRequestIds.includes(r.id));
+  const activeSuppliers = suppliers.filter(s => s.status === 'active');
+
+  const [selectedRequestId, setSelectedRequestId] = useState('');
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    specifications: '',
+    deadline: '',
+    invitedSuppliers: [],
+  });
+
+  const selectedRequest = requests.find(r => r.id === selectedRequestId);
+
+  const handleRequestSelect = (reqId) => {
+    setSelectedRequestId(reqId);
+    const req = requests.find(r => r.id === reqId);
+    if (req) {
+      setForm(prev => ({
+        ...prev,
+        title: `Supply of ${req.title}`,
+        description: `Procurement of ${req.title} for the ${req.department} department. ${req.description}`,
+      }));
+    }
+  };
+
+  const toggleSupplier = (supplierId) => {
+    setForm(prev => ({
+      ...prev,
+      invitedSuppliers: prev.invitedSuppliers.includes(supplierId)
+        ? prev.invitedSuppliers.filter(id => id !== supplierId)
+        : [...prev.invitedSuppliers, supplierId],
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!selectedRequestId || !form.title || !form.deadline || form.invitedSuppliers.length === 0) {
+      alert('Please fill all required fields and select at least one supplier');
+      return;
+    }
+
+    const newTender = {
+      id: `TND-2024-${String(tenders.length + 1).padStart(3, '0')}`,
+      requestId: selectedRequestId,
+      title: form.title,
+      description: form.description,
+      category: selectedRequest?.category || '',
+      specifications: form.specifications,
+      quantity: selectedRequest?.quantity || 1,
+      estimatedBudget: selectedRequest?.estimatedCost || 0,
+      deadline: new Date(form.deadline).toISOString(),
+      status: 'open',
+      invitedSuppliers: form.invitedSuppliers,
+      awardedBidId: null,
+      awardedSupplierId: null,
+      createdBy: currentUser?.id,
+      createdAt: new Date().toISOString(),
+      publishedAt: new Date().toISOString(),
+      closedAt: null,
+    };
+
+    tenders.push(newTender);
+
+    // Update request status to in_procurement
+    const req = requests.find(r => r.id === selectedRequestId);
+    if (req) req.status = 'in_procurement';
+
+    alert('Tender created and published successfully!');
+    navigate(`/tenders/${newTender.id}`);
+  };
+
+  return (
+    <div className="page" style={{ maxWidth: 900 }}>
+      <button className="btn btn-ghost" onClick={() => navigate(-1)}><ArrowLeft size={18} /> Back</button>
+
+      <div style={{ marginTop: 'var(--space-lg)', marginBottom: 'var(--space-xl)' }}>
+        <h1 style={{ fontSize: 'var(--font-2xl)', fontWeight: 800 }}>Create New Tender</h1>
+        <p style={{ color: 'var(--text-secondary)', marginTop: 'var(--space-xs)' }}>Create a tender from an approved procurement request</p>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        {/* Step 1: Select Request */}
+        <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
+          <div className="card-title" style={{ marginBottom: 'var(--space-md)', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+            <FileText size={18} /> Step 1: Select Approved Request *
+          </div>
+          {eligibleRequests.length === 0 ? (
+            <div style={{ padding: 'var(--space-lg)', textAlign: 'center', color: 'var(--text-muted)' }}>
+              No approved requests available for tender creation
+            </div>
+          ) : (
+            <div style={{ display: 'grid', gap: 'var(--space-sm)' }}>
+              {eligibleRequests.map(r => (
+                <label key={r.id} style={{
+                  display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
+                  padding: 'var(--space-md)', cursor: 'pointer',
+                  background: selectedRequestId === r.id ? 'var(--primary-glow)' : 'var(--bg-surface)',
+                  border: `1px solid ${selectedRequestId === r.id ? 'var(--primary)' : 'var(--border)'}`,
+                  borderRadius: 'var(--radius-md)',
+                  transition: 'all var(--transition-fast)'
+                }}>
+                  <input type="radio" name="request" value={r.id} checked={selectedRequestId === r.id} onChange={() => handleRequestSelect(r.id)} />
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--primary-light)' }}>{r.id}</span>
+                      <span className="badge badge-info">{r.category.split(' ')[0]}</span>
+                    </div>
+                    <div style={{ fontWeight: 500, marginTop: 2 }}>{r.title}</div>
+                    <div style={{ fontSize: 'var(--font-sm)', color: 'var(--text-secondary)', marginTop: 2 }}>
+                      {r.department} • Qty: {r.quantity} • {formatCurrency(r.estimatedCost)}
+                    </div>
+                  </div>
+                </label>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Step 2: Tender Details */}
+        <div className="card" style={{ marginBottom: 'var(--space-lg)' }}>
+          <div className="card-title" style={{ marginBottom: 'var(--space-md)', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+            <Plus size={18} /> Step 2: Tender Details
+          </div>
+          <div className="form-group">
+            <label className="form-label">Title *</label>
+            <input className="form-input" type="text" value={form.title} onChange={e => setForm(prev => ({ ...prev, title: e.target.value }))} placeholder="Enter tender title..." />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Description</label>
+            <textarea className="form-textarea" value={form.description} onChange={e => setForm(prev => ({ ...prev, description: e.target.value }))} placeholder="Describe what you need from suppliers..." />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Technical Specifications</label>
+            <textarea className="form-textarea" value={form.specifications} onChange={e => setForm(prev => ({ ...prev, specifications: e.target.value }))} placeholder="Detailed technical requirements, quality standards, certifications needed..." />
+          </div>
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Bid Deadline *</label>
+              <input className="form-input" type="datetime-local" value={form.deadline} onChange={e => setForm(prev => ({ ...prev, deadline: e.target.value }))} />
+            </div>
+            <div className="form-group">
+              <label className="form-label">Estimated Budget</label>
+              <input className="form-input" type="text" value={selectedRequest ? formatCurrency(selectedRequest.estimatedCost) : '—'} disabled style={{ opacity: 0.7 }} />
+            </div>
+          </div>
+        </div>
+
+        {/* Step 3: Invite Suppliers */}
+        <div className="card" style={{ marginBottom: 'var(--space-xl)' }}>
+          <div className="card-title" style={{ marginBottom: 'var(--space-md)', display: 'flex', alignItems: 'center', gap: 'var(--space-sm)' }}>
+            <Building2 size={18} /> Step 3: Invite Suppliers * ({form.invitedSuppliers.length} selected)
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 'var(--space-sm)' }}>
+            {activeSuppliers.map(s => {
+              const isSelected = form.invitedSuppliers.includes(s.id);
+              return (
+                <div key={s.id} onClick={() => toggleSupplier(s.id)} style={{
+                  display: 'flex', alignItems: 'center', gap: 'var(--space-md)',
+                  padding: 'var(--space-md)', cursor: 'pointer',
+                  background: isSelected ? 'var(--primary-glow)' : 'var(--bg-surface)',
+                  border: `1px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
+                  borderRadius: 'var(--radius-md)',
+                  transition: 'all var(--transition-fast)'
+                }}>
+                  <div style={{
+                    width: 24, height: 24, borderRadius: 'var(--radius-sm)',
+                    border: `2px solid ${isSelected ? 'var(--primary)' : 'var(--border)'}`,
+                    background: isSelected ? 'var(--primary)' : 'transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, transition: 'all var(--transition-fast)'
+                  }}>
+                    {isSelected && <Check size={14} color="white" />}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: 'var(--font-sm)' }}>{s.companyName}</div>
+                    <div style={{ fontSize: 'var(--font-xs)', color: 'var(--text-muted)' }}>
+                      {s.businessType} • Rating: {s.rating}★
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Submit */}
+        <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'flex-end' }}>
+          <button type="button" className="btn btn-secondary" onClick={() => navigate(-1)}>Cancel</button>
+          <button type="submit" className="btn btn-primary btn-lg">
+            <Plus size={18} /> Create & Publish Tender
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+export default CreateTender;
